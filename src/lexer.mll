@@ -19,14 +19,14 @@ rule read =
   | "->" { ARROW }
   | "true" { TRUE }
   | "false" { FALSE }
-  | "," { COMA }
+  (* | "," { COMA }
   | "fst" { FST }
   | "snd" { SND }
   | "Left" { LEFT }
   | "Right" { RIGHT }
   | "match" { MATCH }
   | "with" { WITH }
-  | "|" { VERTBAR }
+  | "|" { VERTBAR } *)
   | "if" { IF }
   | "then" { THEN }
   | "else" { ELSE }

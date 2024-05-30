@@ -20,9 +20,9 @@ and value =
   | VClosure of string * expr * env
   | VInt of int 
   | VBool of bool
-  | VCouple of value * value
+  (* | VCouple of value * value
   | VLeft of value
-  | VRight of value
+  | VRight of value *)
 
 let unbound_var_err = "Unbound variable"
 let not_a_closure_err = "Application of a not closure"
@@ -42,12 +42,12 @@ let rec eval (env : env) (e : expr) : value = match e with
   | Int n -> VInt n 
   | Bool b -> VBool b
   | Binop (bop, e1, e2) -> eval_bop env bop e1 e2
-  | Couple (e1, e2) -> eval_couple env e1 e2
+  (* | Couple (e1, e2) -> eval_couple env e1 e2
   | Fst e -> eval_fst env e
   | Snd e -> eval_snd env e
   | Left e -> eval_left env e
   | Right e -> eval_right env e
-  | Match (e, x1, e1, x2, e2) -> eval_match env e x1 e1 x2 e2 
+  | Match (e, x1, e1, x2, e2) -> eval_match env e x1 e1 x2 e2  *)
   | If (e1, e2, e3) -> eval_if env e1 e2 e3
   | Let (x, e1, e2) -> eval_let env x e1 e2
 
@@ -78,7 +78,7 @@ and eval_bop env bop e1 e2 =
   | Leq, VBool a, VBool b -> VBool (a <= b)
   | _ -> failwith bop_types_err
 
-and eval_couple env e1 e2 =
+(* and eval_couple env e1 e2 =
   let v1 = eval env e1 in 
   let v2 = eval env e2 in
   VCouple (v1, v2)
@@ -112,7 +112,7 @@ and eval_match env e x1 e1 x2 e2 =
   | VRight v2 -> 
     let env' = Env.add x2 v2 env in 
     eval env' e2
-  | _ -> failwith bad_match_err
+  | _ -> failwith bad_match_err *)
 
 and eval_if env e1 e2 e3 =
   match eval env e1 with

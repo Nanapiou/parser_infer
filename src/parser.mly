@@ -20,10 +20,10 @@ let rec make_apply e = function
 %token ADD MULT LEQ
 %token FUN ARROW
 %token TRUE FALSE
-%token COMA
-%token FST SND
-%token LEFT RIGHT
-%token MATCH WITH VERTBAR
+// %token COMA
+// %token FST SND
+// %token LEFT RIGHT
+// %token MATCH WITH VERTBAR
 %token IF THEN ELSE
 %token LET EQUALS IN
 
@@ -42,21 +42,21 @@ prog:
 expr:
 	| e = simpl_expr { e }
 	| e = simpl_expr; es = simpl_expr+ { make_apply e es }
-	| FST; e = simpl_expr { Fst (e) }
-	| SND; e = simpl_expr { Snd (e) }
-	| LEFT; e = simpl_expr { Left (e) }
-	| RIGHT; e = simpl_expr { Right (e) }
+	// | FST; e = simpl_expr { Fst (e) }
+	// | SND; e = simpl_expr { Snd (e) }
+	// | LEFT; e = simpl_expr { Left (e) }
+	// | RIGHT; e = simpl_expr { Right (e) }
 	| FUN; x = ID; ARROW; e = expr { Fun (x, e) }
 	| e1 = expr; ADD; e2 = expr { Binop (Add, e1, e2) }
 	| e1 = expr; LEQ; e2 = expr { Binop (Leq, e1, e2) }
 	| e1 = expr; MULT; e2 = expr { Binop (Mult, e1, e2) }
 	| LET; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (id, e1, e2) }
 	| IF; e1 = expr; THEN; e2 = expr; ELSE; e3 = expr { If (e1, e2, e3) }
-	| MATCH; e = expr; WITH; VERTBAR?; LEFT; x1 = ID; ARROW; e1 = expr; VERTBAR; RIGHT; x2 = ID; ARROW; e2 = expr { Match (e, x1, e1, x2, e2) }
+	// | MATCH; e = expr; WITH; VERTBAR?; LEFT; x1 = ID; ARROW; e1 = expr; VERTBAR; RIGHT; x2 = ID; ARROW; e2 = expr { Match (e, x1, e1, x2, e2) }
 	;
 
 simpl_expr:
-  	| LPAREN; e1 = expr; COMA; e2 = expr; RPAREN { Couple (e1, e2) } 
+  	// | LPAREN; e1 = expr; COMA; e2 = expr; RPAREN { Couple (e1, e2) } 
   	| LPAREN; e = expr; RPAREN { e } 
 	| TRUE { Bool true }
 	| FALSE { Bool false }

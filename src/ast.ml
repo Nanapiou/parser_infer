@@ -15,12 +15,12 @@ type expr =
   | Int of int 
   | Bool of bool 
   | Binop of bop * expr * expr 
-  | Couple of expr * expr
+  (* | Couple of expr * expr
   | Fst of expr
   | Snd of expr
   | Left of expr
   | Right of expr
-  | Match of expr * string * expr * string * expr
+  | Match of expr * string * expr * string * expr *)
   | If of expr * expr * expr 
   | Let of string * expr * expr
 
