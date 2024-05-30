@@ -1,0 +1,1 @@
+# Just a type inference for OCaml
