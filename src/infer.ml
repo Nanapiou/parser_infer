@@ -46,9 +46,9 @@ and infer_bop _ _ _ _ _ =
 
 let default_tenv = 
   Env.empty |> 
-  Env.add "( + )" (TArrow (TArrow (TConst TInt, TConst TInt), TConst TInt)) |>
-  Env.add "( * )" (TArrow (TArrow (TConst TInt, TConst TInt), TConst TInt)) |>
-  Env.add "( <= )" (TArrow (TArrow (TConst TInt, TConst TInt), TConst TBool))
+  Env.add "( + )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
+  Env.add "( * )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
+  Env.add "( <= )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TBool)))
 
 let infer_text text = 
   text |> parse |> infer_constraints default_tenv []
