@@ -1,4 +1,4 @@
-open Ast 
+open Ast
 
 let f () = 
   match Var "boom" with
