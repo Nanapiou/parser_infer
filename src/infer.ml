@@ -80,15 +80,15 @@ let unify (c: constraints): substitution list =
     | [] -> subs
     | (t1, t2) :: q ->
       match t1, t2 with
-      | TConst TInt, TConst TInt | TConst TBool, TConst TBool -> aux q subs 
-      | TVar n1, TVar n2 when n1 = n2 -> aux q subs
-      | TVar x, t when not (include_var_typ t x) ->
+      | TConst TInt, TConst TInt | TConst TBool, TConst TBool -> aux q subs (* Ignoring, trivial case *)
+      | TVar n1, TVar n2 when n1 = n2 -> aux q subs (* Same, but need a when... *)
+      | TVar x, t when not (include_var_typ t x) -> (* x and t if x doesn't occur in t *)
         aux (List.map (fun (t1, t2) -> (substitute_typ t1 x t, substitute_typ t2 x t)) q) ((t, x) :: subs)
-      | t, TVar x when not (include_var_typ t x) ->
+      | t, TVar x when not (include_var_typ t x) -> (* Same, but reversed (the when forced me to do like this) *)
         aux (List.map (fun (t1, t2) -> (substitute_typ t1 x t, substitute_typ t2 x t)) q) ((t, x) :: subs)
-      | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs 
+      | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
       | TForall _, _ | _, TForall _ -> failwith "Not implemented"
-      | _ -> failwith "No unifier"
+      | _ -> failwith "No unifier" (* No case found, no unifier. *)
   in
   aux (ConstraintsSet.to_list c) []
 
