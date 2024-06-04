@@ -1,17 +1,9 @@
 open Ast
 open Main
 
-module ConstraintsSet = Set.Make(
-  struct
-    type t = typ * typ
 
-    let compare _ _ = 1 (* There's isn't any easy order between types *)
-  end
-)
-
-let ( @= ) = ConstraintsSet.union
 type typ_env = typ Env.t
-type constraints = ConstraintsSet.t (* Each (t, t) should have t = t *)
+type constraints = (typ * typ) list (* Each (t, t) should have t = t *)
 type substitution = typ * id (* A (t, 'x) means that we should subst t by 'x *)
 
 let varname = ref 0
@@ -24,9 +16,9 @@ let next_varname () = (* We'll consider that it gaves us a fresh variable (that'
 
 let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =
   match e with
-  | Int _ -> (ConstraintsSet.empty, TConst TInt)
-  | Bool _ -> (ConstraintsSet.empty, TConst TBool)
-  | Var x -> (ConstraintsSet.empty, Env.find x tenv)
+  | Int _ -> ([], TConst TInt)
+  | Bool _ -> ([], TConst TBool)
+  | Var x -> ([], Env.find x tenv)
   | If (e1, e2, e3) -> infer_if tenv e1 e2 e3
   | Fun (x, e) -> infer_fun tenv x e
   | App (e1, e2) -> infer_app tenv e1 e2 
@@ -38,10 +30,10 @@ and infer_if tenv e1 e2 e3 =
   let (c1, t1) = infer_constraints tenv e1 in 
   let (c2, t2) = infer_constraints tenv e2 in 
   let (c3, t3) = infer_constraints tenv e3 in
-  (c1 @= c2 @= c3 |>
-    ConstraintsSet.add (t1, TConst TBool) |>
-    ConstraintsSet.add (t, t2) |>
-    ConstraintsSet.add (t, t3),
+  (c1 @ c2 @ c3 @ [
+    (t1, TConst TBool);
+    (t, t2);
+    (t, t3)],
   t)
 
 and infer_fun tenv x e =
@@ -53,7 +45,7 @@ and infer_app tenv e1 e2 =
   let t = next_varname () in 
   let (c1, t1) = infer_constraints tenv e1 in 
   let (c2, t2) = infer_constraints tenv e2 in 
-  (c1 @= c2 |> ConstraintsSet.add (t1, TArrow (t2, t)), t)
+  ((t1, TArrow (t2, t)) :: c1 @ c2, t)
 
 (* Only integers for now, will always be considered as int -> int -> bool | int, just changing for <= *)
 and infer_bop _ _ _ _ = 
@@ -90,7 +82,7 @@ let unify (c: constraints): substitution list =
       | TForall _, _ | _, TForall _ -> failwith "Not implemented"
       | _ -> failwith "No unifier" (* No case found, no unifier. *)
   in
-  aux (ConstraintsSet.to_list c) []
+  aux c []
 
 let default_tenv = 
   Env.empty |> 
@@ -114,7 +106,7 @@ let rec print_typ = function
   | TForall _ -> failwith "Not implemented"
 
 let print_constraints =
-  ConstraintsSet.iter (fun (t1, t2) ->
+  List.iter (fun (t1, t2) ->
     print_typ t1;
     print_string " = ";
     print_typ t2;
