@@ -12,8 +12,8 @@ type expr =
   | Var of string
   | App of expr * expr
   | Fun of string * expr
-  | Int of int 
-  | Bool of bool 
+  | Int of int
+  | Bool of bool
   | Binop of bop * expr * expr 
   (* | Couple of expr * expr
   | Fst of expr
@@ -29,6 +29,7 @@ type tconst =
   | TBool
 
 type typ =
+  | TVar of int
   | TConst of tconst 
   | TArrow of typ * typ
   | TForall of id list * typ
