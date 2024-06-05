@@ -57,7 +57,7 @@ let rec include_var_typ t v =
   | TVar n -> n = v
   | TConst _ -> false 
   | TArrow (t1, t2) -> include_var_typ t1 v || include_var_typ t2 v
-  | TForall _ -> failwith "Not implemented"
+  | TForall _ -> failwith "Not implemented, cf polymorphism"
 
 (** [apply_substitutions t subs] apply each subtitution of the [subs] list from right to left on the type [t] *)
 let rec apply_substitutions (t: typ) (subs: substitution list) =
@@ -71,7 +71,7 @@ and substitute_typ t x t' =
   | TVar n when x = n -> t'
   | TConst _ | TVar _ -> t 
   | TArrow (t1, t2) -> TArrow (substitute_typ t1 x t', substitute_typ t2 x t')
-  | TForall _ -> failwith "Not implemented"
+  | TForall _ -> failwith "Not implemented, cf polymorphism"
 
 (** [unify c] returns a list of subtitutions which unify the set of constraints. *)
 let unify (c: constraints): substitution list =
@@ -87,7 +87,7 @@ let unify (c: constraints): substitution list =
       | t, TVar x when not (include_var_typ t x) -> (* Same, but reversed (the when forced me to do like this) *)
         aux (List.map (fun (t1, t2) -> (substitute_typ t1 x t, substitute_typ t2 x t)) q) ((t, x) :: subs)
       | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
-      | TForall _, _ | _, TForall _ -> failwith "Not implemented"
+      | TForall _, _ | _, TForall _ -> failwith "Not implemented, cf polymorphism"
       | _ -> failwith "No unifier" (* No case found, no unifier. *)
   in
   aux c []
@@ -102,7 +102,7 @@ let rec print_typ = function
     print_string " -> ";
     print_typ t2;
     print_char ')'
-  | TForall _ -> failwith "Not implemented"
+  | TForall _ -> failwith "Not implemented, cf polymorphism"
 
 let print_constraints =
   List.iter (fun (t1, t2) ->
