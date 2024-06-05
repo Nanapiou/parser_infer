@@ -12,8 +12,8 @@ let next_varname () = (* We'll consider that it gaves us a fresh variable (that'
   let v = !varname in 
   varname := !varname + 1;
   TVar v
-  
 
+(** [infer_constraints tenv e] create constraints for [e] in the environnement [tenv]. *)
 let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =
   match e with
   | Int _ -> ([], TConst TInt)
@@ -51,6 +51,7 @@ and infer_app tenv e1 e2 =
 and infer_bop _ _ _ _ = 
   failwith "Nah that's shit"
 
+(** [include_var_typ t v] return true if [v] occur in [t] as a [TVar v], otherwise it returns false. *)
 let rec include_var_typ t v =
   match t with
   | TVar n -> n = v
@@ -58,14 +59,21 @@ let rec include_var_typ t v =
   | TArrow (t1, t2) -> include_var_typ t1 v || include_var_typ t2 v
   | TForall _ -> failwith "Not implemented"
 
-let rec substitute_typ t x t' =
+(** [apply_substitutions t subs] apply each subtitution of the [subs] list from right to left on the type [t] *)
+let rec apply_substitutions (t: typ) (subs: substitution list) =
+  List.fold_right (fun (t', x) t ->
+    substitute_typ t x t'
+  ) subs t
+
+(** [substitute_typ t x t'] correspond to the [t{t'/x}] relation. *)
+and substitute_typ t x t' =
   match t with
   | TVar n when x = n -> t'
   | TConst _ | TVar _ -> t 
   | TArrow (t1, t2) -> TArrow (substitute_typ t1 x t', substitute_typ t2 x t')
   | TForall _ -> failwith "Not implemented"
-  
 
+(** [unify c] returns a list of subtitutions which unify the set of constraints. *)
 let unify (c: constraints): substitution list =
   let rec aux c subs =
     match c with
@@ -84,20 +92,11 @@ let unify (c: constraints): substitution list =
   in
   aux c []
 
-let default_tenv = 
-  Env.empty |> 
-  Env.add "( + )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
-  Env.add "( * )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
-  Env.add "( <= )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TBool)))
-
-let infer_text text = 
-  text |> parse |> infer_constraints default_tenv 
-
 let rec print_typ = function
   | TConst (TInt) -> print_string "TInt"
   | TConst (TBool) -> print_string "TBool"
-  | TVar n -> Printf.printf "TVar %d" n 
-  | TArrow (t1, t2) -> 
+  | TVar n -> Printf.printf "TVar %d" n
+  | TArrow (t1, t2) ->
     print_char '(';
     print_typ t1;
     print_string " -> ";
@@ -124,3 +123,13 @@ let rec print_substitutions (subs: substitution list) =
     print_string "}; ";
     print_substitutions q
 
+let default_tenv = 
+  Env.empty |>
+  Env.add "( + )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
+  Env.add "( * )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TInt))) |>
+  Env.add "( <= )" (TArrow (TConst TInt, TArrow (TConst TInt, TConst TBool)))
+
+(* Infer a string by parsing, finding constraints, unifying them and applying substitutions *)
+let infer string =
+  let (c, t) = string |> parse |> infer_constraints default_tenv in
+  c |> unify |> apply_substitutions t
