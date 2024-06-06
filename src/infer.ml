@@ -95,7 +95,8 @@ let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =
   | Fun (x, e) -> infer_fun tenv x e
   | App (e1, e2) -> infer_app tenv e1 e2 
   | Let (x, e1, e2) -> infer_let tenv x e1 e2
-  | Binop (bop, e1, e2) -> infer_bop tenv bop e1 e2 (* Will be deleted for natives functions *)
+  (* | Binop (_, _, _) -> assert false *)
+    (* infer_bop tenv bop e1 e2 *)
 
 and infer_if tenv e1 e2 e3 =
   let t = next_varname () in
@@ -126,8 +127,8 @@ and infer_let tenv x e1 e2 =
   (c1 @ c2, t2)
 
 (* Only integers for now, will always be considered as int -> int -> bool | int, just changing for <= *)
-and infer_bop _ _ _ _ = 
-  failwith "Nah that's shit"
+(* and infer_bop _ _ _ _ = 
+  failwith "Nah that's shit" *)
 
 let rec print_typ = function
   | TConst (TInt) -> print_string "TInt"

@@ -33,7 +33,8 @@ let rec eval (env : env) (e : expr) : value = match e with
   | Fun (x, e) -> VClosure (x, e, env)
   | Int n -> VInt n 
   | Bool b -> VBool b
-  | Binop (bop, e1, e2) -> eval_bop env bop e1 e2
+  (* | Binop (_, _, _) -> assert false *)
+    (* eval_bop env bop e1 e2 *)
   (* | Couple (e1, e2) -> eval_couple env e1 e2
   | Fst e -> eval_fst env e
   | Snd e -> eval_snd env e
@@ -61,14 +62,14 @@ and eval_app env e1 e2 =
     end
   | _ -> failwith not_a_closure_err
 
-and eval_bop env bop e1 e2 =
+(* and eval_bop env bop e1 e2 =
   let v1 = eval env e1 in 
   let v2 = eval env e2 in
   match bop, v1, v2 with
   | Add, VInt a, VInt b -> VInt (a + b)
   | Mult, VInt a, VInt b -> VInt (a * b)
   | Leq, VBool a, VBool b -> VBool (a <= b)
-  | _ -> failwith bop_types_err
+  | _ -> failwith bop_types_err *)
 
 (* and eval_couple env e1 e2 =
   let v1 = eval env e1 in 

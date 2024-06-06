@@ -14,8 +14,8 @@ type expr =
   | Fun of string * expr
   | Int of int
   | Bool of bool
-  | Binop of bop * expr * expr 
-  (* | Couple of expr * expr
+  (* | Binop of bop * expr * expr 
+   | Couple of expr * expr
   | Fst of expr
   | Snd of expr
   | Left of expr

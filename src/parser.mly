@@ -1,7 +1,3 @@
-(* This file uses some advanced parsing techniques
-   to parse juxtaposed applications [e1 e2 e3] the
-	 same way as OCaml does. *)
-
 %{
 open Ast
 
@@ -27,9 +23,9 @@ let rec make_apply e = function
 %token IF THEN ELSE
 %token LET EQUALS IN
 
-%left ADD 
-%left MULT 
-%left LEQ
+// %left ADD 
+// %left MULT 
+// %left LEQ
 
 %start <Ast.expr> prog
 
@@ -50,9 +46,9 @@ expr:
 	| LPAREN; ADD; RPAREN; e = expr { App (Var ("( + )"), e) }
 	| LPAREN; MULT; RPAREN; e = expr { App (Var ("( * )"), e) }
 	| LPAREN; LEQ; RPAREN; e = expr { App (Var ("( <= )"), e) }
-	| e1 = expr; ADD; e2 = expr { Binop (Add, e1, e2) }
-	| e1 = expr; LEQ; e2 = expr { Binop (Leq, e1, e2) }
-	| e1 = expr; MULT; e2 = expr { Binop (Mult, e1, e2) }
+	// | e1 = expr; ADD; e2 = expr { Binop (Add, e1, e2) }
+	// | e1 = expr; LEQ; e2 = expr { Binop (Leq, e1, e2) }
+	// | e1 = expr; MULT; e2 = expr { Binop (Mult, e1, e2) }
 	| LET; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (id, e1, e2) }
 	| IF; e1 = expr; THEN; e2 = expr; ELSE; e3 = expr { If (e1, e2, e3) }
 	// | MATCH; e = expr; WITH; VERTBAR?; LEFT; x1 = ID; ARROW; e1 = expr; VERTBAR; RIGHT; x2 = ID; ARROW; e2 = expr { Match (e, x1, e1, x2, e2) }
