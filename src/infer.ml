@@ -53,7 +53,7 @@ let rec aux c subs =
     | t, TVar x when not (include_var_typ t x) -> (* Same, but reversed (the when forced me to do like this) *)
       aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
     | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
-    | TForall _, _ | _, TForall _ -> failwith "Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created"
+    | TForall _, _ | _, TForall _ -> failwith "Nop" (* Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created *)
     | _ -> failwith "No unifier" (* No case found, no unifier. *)
 in
 aux c []
