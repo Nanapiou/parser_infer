@@ -27,7 +27,7 @@ Dans le cas général:
 #### Constantes
 
 $$
-\frac{}{\Gamma\vdash n:\text{int}\dashv\emptyset}
+\frac{}{\Gamma\vdash i:\text{int}\dashv\emptyset}
 $$
 
 $$
