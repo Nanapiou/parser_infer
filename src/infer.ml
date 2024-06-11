@@ -79,11 +79,16 @@ let generalize c1 tenv x t1 =
   in
   let s = unify c1 in
   let u1 = apply_substitutions s t1 in
-  let env1 = apply_substitutions_env s tenv in
+  let tenv1 = apply_substitutions_env s tenv in
   let u1_set = get_var_set_from_typ u1 in
-  let env1_set = get_var_set_from_env env1 in 
+  let env1_set = get_var_set_from_env tenv1 in 
   let new_vars = IntSet.diff u1_set env1_set in 
-  Env.add x (TForall (IntSet.to_list new_vars, u1)) env1
+  Env.add x (TForall (IntSet.to_list new_vars, u1)) tenv1
+  (* I don't know which way is better... Unifying at each let declaration, or at the very end? *)
+  (* let u1_set = get_var_set_from_typ t1 in
+  let env1_set = get_var_set_from_env tenv in
+  let new_vars = IntSet.diff u1_set env1_set in 
+  Env.add x (TForall (IntSet.to_list new_vars, t1)) tenv *)
 
 (** [infer_constraints tenv e] create constraints for [e] in the environnement [tenv]. *)
 let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =

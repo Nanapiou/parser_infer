@@ -3,10 +3,10 @@
 type id = int 
 type name = string
 
-type bop = 
+(* type bop = 
   | Add 
   | Mult
-  | Leq
+  | Leq *)
 
 type expr =
   | Var of string

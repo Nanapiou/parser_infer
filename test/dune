@@ -1,3 +1,3 @@
 (executable
  (name main)
- (libraries interp ounit2))
+ (libraries infer ounit2))
