@@ -37,7 +37,7 @@ type typ =
   | TVar of int
   | TConst of tconst 
   | TArrow of typ * typ
-  | Nuplet of typ array
+  (* | Nuplet of typ array *)
   | TForall of id list * typ
 
 type located_typ = char_place * typ
