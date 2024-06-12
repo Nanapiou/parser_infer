@@ -8,6 +8,7 @@ type name = string
   | Mult
   | Leq *)
 
+
 type expr =
   | Var of string
   | App of expr * expr
@@ -24,6 +25,10 @@ type expr =
   | If of expr * expr * expr 
   | Let of string * expr * expr
 
+
+type char_place = int * int
+type located_expr = char_place * expr
+
 type tconst =
   | TInt 
   | TBool
@@ -32,4 +37,7 @@ type typ =
   | TVar of int
   | TConst of tconst 
   | TArrow of typ * typ
+  | Nuplet of typ array
   | TForall of id list * typ
+
+type located_typ = char_place * typ

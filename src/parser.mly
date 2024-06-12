@@ -22,6 +22,7 @@ let rec make_apply e = function
 // %token MATCH WITH VERTBAR
 %token IF THEN ELSE
 %token LET EQUALS IN
+%token UNIT
 
 // %left ADD 
 // %left MULT 

@@ -33,6 +33,7 @@ rule read =
   | "let" { LET }
   | "=" { EQUALS }
   | "in" { IN }
+  | "()" { UNIT }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF }
