@@ -12,6 +12,7 @@ and value =
   | VClosure of string * expr * env
   | VInt of int 
   | VBool of bool
+  | VUnit
   (* | VCouple of value * value
   | VLeft of value
   | VRight of value *)
@@ -43,6 +44,7 @@ let rec eval (env : env) (e : expr) : value = match e with
   | Match (e, x1, e1, x2, e2) -> eval_match env e x1 e1 x2 e2  *)
   | If (e1, e2, e3) -> eval_if env e1 e2 e3
   | Let (x, e1, e2) -> eval_let env x e1 e2
+  | Unitexpr -> VUnit
 
 (** [eval_var env x] is the [v] such that [<env, x> ==> v]. *)
 and eval_var env x = 

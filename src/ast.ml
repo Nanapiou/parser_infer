@@ -24,6 +24,8 @@ type expr =
   | Match of expr * string * expr * string * expr *)
   | If of expr * expr * expr 
   | Let of string * expr * expr
+  | Unitexpr
+  
 
 
 type char_place = int * int
@@ -32,6 +34,7 @@ type located_expr = char_place * expr
 type tconst =
   | TInt 
   | TBool
+  | TUnit
 
 type typ =
   | TVar of int

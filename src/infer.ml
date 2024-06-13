@@ -17,6 +17,7 @@ let next_varname () = (* We'll consider that it gaves us a fresh variable (that'
 let rec print_typ = function
   | TConst (TInt) -> print_string "TInt"
   | TConst (TBool) -> print_string "TBool"
+  | TConst (TUnit) -> print_string "TUnit"
   | TVar n -> Printf.printf "TVar %d" n
   | TArrow (t1, t2) ->
     print_char '(';
@@ -80,7 +81,7 @@ let rec aux c subs =
   | [] -> subs
   | (t1, t2) :: q ->
     match t1, t2 with
-    | TConst TInt, TConst TInt | TConst TBool, TConst TBool -> aux q subs (* Ignoring, trivial case *)
+    | TConst TInt, TConst TInt | TConst TBool, TConst TBool | TConst TUnit, TConst TUnit -> aux q subs (* Ignoring, trivial case *)
     | TVar n1, TVar n2 when n1 = n2 -> aux q subs (* Same, but need a when... *)
     | TVar x, t when not (include_var_typ t x) -> (* x and t if x doesn't occur in t *)
       aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
@@ -132,6 +133,7 @@ let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =
   match e with
   | Int _ -> ([], TConst TInt)
   | Bool _ -> ([], TConst TBool)
+  | Unitexpr -> ([], TConst TUnit)
   | Var x -> ([], instantiate (Env.find x tenv))
   | If (e1, e2, e3) -> infer_if tenv e1 e2 e3
   | Fun (x, e) -> infer_fun tenv x e

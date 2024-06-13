@@ -54,6 +54,7 @@ expr:
 
 simpl_expr:
   	// | LPAREN; e1 = expr; COMA; e2 = expr; RPAREN { Couple (e1, e2) } 
+	| UNIT { Unitexpr }
 	| LPAREN; ADD; RPAREN { Var ("( + )") }
 	| LPAREN; MULT; RPAREN { Var ("( * )") }
 	| LPAREN; LEQ; RPAREN { Var ("( <= )") }
