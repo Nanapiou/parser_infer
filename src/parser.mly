@@ -44,9 +44,6 @@ expr:
 	// | LEFT; e = simpl_expr { Left (e) }
 	// | RIGHT; e = simpl_expr { Right (e) }
 	| FUN; x = ID; ARROW; e = expr { Fun (x, e) }
-	| LPAREN; ADD; RPAREN; e = expr { App (Var ("( + )"), e) }
-	| LPAREN; MULT; RPAREN; e = expr { App (Var ("( * )"), e) }
-	| LPAREN; LEQ; RPAREN; e = expr { App (Var ("( <= )"), e) }
 	// | e1 = expr; ADD; e2 = expr { Binop (Add, e1, e2) }
 	// | e1 = expr; LEQ; e2 = expr { Binop (Leq, e1, e2) }
 	// | e1 = expr; MULT; e2 = expr { Binop (Mult, e1, e2) }
@@ -57,6 +54,9 @@ expr:
 
 simpl_expr:
   	// | LPAREN; e1 = expr; COMA; e2 = expr; RPAREN { Couple (e1, e2) } 
+	| LPAREN; ADD; RPAREN { Var ("( + )") }
+	| LPAREN; MULT; RPAREN { Var ("( * )") }
+	| LPAREN; LEQ; RPAREN { Var ("( <= )") }
   	| LPAREN; e = expr; RPAREN { e } 
 	| TRUE { Bool true }
 	| FALSE { Bool false }

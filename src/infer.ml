@@ -14,6 +14,40 @@ let next_varname () = (* We'll consider that it gaves us a fresh variable (that'
   varname := !varname + 1;
   TVar v
 
+let rec print_typ = function
+  | TConst (TInt) -> print_string "TInt"
+  | TConst (TBool) -> print_string "TBool"
+  | TVar n -> Printf.printf "TVar %d" n
+  | TArrow (t1, t2) ->
+    print_char '(';
+    print_typ t1;
+    print_string " -> ";
+    print_typ t2;
+    print_char ')'
+  | TForall (l, t) ->
+    print_string "TForall ";
+    List.iter (Printf.printf "'%d ") l;
+    print_string ". ";
+    print_typ t
+
+let print_constraints =
+  List.iter (fun (t1, t2) ->
+    print_typ t1;
+    print_string " = ";
+    print_typ t2;
+    print_newline ()
+  )
+
+let rec print_substitutions = function
+  | [] -> print_newline ()
+  | (t, x) :: q ->
+    print_char '{';
+    print_typ t;
+    print_char '/';
+    print_int x;
+    print_string "}; ";
+    print_substitutions q
+
 (** [include_var_typ t v] return true if [v] occur in [t] as a [TVar v], otherwise it returns false. *)
 let rec include_var_typ t v =
   match t with
@@ -54,7 +88,10 @@ let rec aux c subs =
       aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
     | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
     | TForall _, _ | _, TForall _ -> failwith "Nop" (* Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created *)
-    | _ -> failwith "No unifier" (* No case found, no unifier. *)
+    | _ -> (* No case found, no unifier. *)
+      print_string "No unifier: ";
+      print_typ t1; print_string " <> "; print_typ t2; print_newline ();
+      failwith "Failed."
 in
 aux c []
 
@@ -134,41 +171,6 @@ and infer_let tenv x e1 e2 =
 (* Only integers for now, will always be considered as int -> int -> bool | int, just changing for <= *)
 (* and infer_bop _ _ _ _ = 
   failwith "Nah that's shit" *)
-
-let rec print_typ = function
-  | TConst (TInt) -> print_string "TInt"
-  | TConst (TBool) -> print_string "TBool"
-  | TVar n -> Printf.printf "TVar %d" n
-  | TArrow (t1, t2) ->
-    print_char '(';
-    print_typ t1;
-    print_string " -> ";
-    print_typ t2;
-    print_char ')'
-  | TForall (l, t) ->
-    print_string "TForall ";
-    List.iter (Printf.printf "'%d ") l;
-    print_string ". ";
-    print_typ t
-
-let print_constraints =
-  List.iter (fun (t1, t2) ->
-    print_typ t1;
-    print_string " = ";
-    print_typ t2;
-    print_newline ()
-  )
-
-let rec print_substitutions (subs: substitution list) =
-  match subs with
-  | [] -> print_newline ()
-  | (t, x) :: q ->
-    print_char '{';
-    print_typ t;
-    print_char '/';
-    print_int x;
-    print_string "}; ";
-    print_substitutions q
 
 let default_tenv = 
   Env.empty |>
