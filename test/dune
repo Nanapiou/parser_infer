@@ -1,3 +1,0 @@
-(executable
- (name main_test)
- (libraries infer ounit2))

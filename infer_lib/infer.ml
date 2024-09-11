@@ -1,8 +1,11 @@
 open Ast
 open Parse
-open TypUtil
 
+module Parse = Parse
+module TypUtil = TypUtil
 module IntSet = Set.Make(Int)
+
+exception NoUnifier of typ * typ
 
 type typ_env = typ Env.t
 type constraints = (typ * typ) list (* Each (t, t) should have t = t *)
@@ -40,6 +43,7 @@ and substitute_typ t' x t =
   | TArrow (t1, t2) -> TArrow (substitute_typ t' x t1, substitute_typ t' x t2)
   | TForall (_, t) -> substitute_typ t' x t
 
+
 (** [unify c] returns a list of subtitutions which unify the set of constraints. *)
 let unify (c: constraints): substitution list =
   let rec aux c subs =
@@ -55,10 +59,7 @@ let unify (c: constraints): substitution list =
         aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
       | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
       | TForall _, _ | _, TForall _ -> failwith "Nop" (* Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created *)
-      | _ -> (* No case found, no unifier. *)
-        print_string "No unifier: ";
-        print_typ t1; print_string " <> "; print_typ t2; print_newline ();
-        failwith "Failed."
+      | _ -> raise (NoUnifier (t1, t2))
   in
   aux c []
 

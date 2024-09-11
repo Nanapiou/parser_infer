@@ -1,4 +1,3 @@
-(* open Infer *)
-(* open TypUtil *)
+open Infer 
 
-(* let () = print_typ @@ infer "let f = fun x -> x in if f true then 0 else f 666" *)
+let () = TypUtil.print_typ @@ infer "let f = fun x -> x in if f true then f 0 else 2"

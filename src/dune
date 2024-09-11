@@ -1,8 +1,4 @@
-(library
- (name infer)
- (modules typUtil infer ast lexer parse parser))
-
-(menhir
- (modules parser))
-
-(ocamllex lexer)
+(executable
+ (name main)
+ (public_name main)
+ (libraries infer))
