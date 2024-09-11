@@ -1,0 +1,4 @@
+- Manage poly-types (such as 'a list), first, try without user defined types to symplify (start with 'a option)
+- Manage user defined types
+
+For both, need to find a way to manage a type environment

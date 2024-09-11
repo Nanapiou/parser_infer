@@ -5,6 +5,7 @@ open Parser
 let white = [' ' '\t' '\n']+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+
+let typid = ' letter+
 let capid = ['A'-'Z'] letter*
 let digit = '-'? ['0'-'9']+
 
@@ -43,6 +44,7 @@ rule read =
   | ";" { SEMICOLON }
   | "()" { UNIT }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
+  | typid { TYPID (Lexing.lexeme lexbuf) }
   | capid { CAPID (Lexing.lexeme lexbuf) }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF }

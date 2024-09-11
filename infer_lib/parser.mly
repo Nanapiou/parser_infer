@@ -19,6 +19,7 @@ let rec make_apply e = function
 %token <int> INT 
 %token <string> ID
 %token <string> CAPID
+%token <string> TYPID
 
 
 %token LPAREN RPAREN
