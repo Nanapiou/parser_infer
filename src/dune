@@ -1,5 +1,6 @@
 (library
- (name main))
+ (name infer)
+ (modules typUtil infer ast lexer parse parser))
 
 (menhir
  (modules parser))
