@@ -1,5 +1,5 @@
 (library
- (name infer))
+ (name main))
 
 (menhir
  (modules parser))

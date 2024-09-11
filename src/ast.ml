@@ -2,19 +2,46 @@
 
 type id = int 
 type name = string
+type char_place = int * int
 
 (* type bop = 
   | Add 
   | Mult
   | Leq *)
 
+type tconst =
+  | TInt 
+  | TBool
+  | TUnit
+  | TFloat
+
+type typ =
+  | TVar of int
+  | TConst of tconst 
+  | TArrow of typ * typ
+  | TForall of id list * typ
+  (* | TTimes of typ array *)
+
+type enumerate_typ =
+  | TConstructor of name * typ
+  | TOr of enumerate_typ list
+
+type located_typ = char_place * typ
+
+type defined_typ =
+  | TDSimple of typ
+  | TDEnumerate of enumerate_typ
 
 type expr =
-  | Var of string
+  | Var of name
   | App of expr * expr
-  | Fun of string * expr
+  | Fun of name * expr
   | Int of int
   | Bool of bool
+  | If of expr * expr * expr 
+  | Let of name * expr * expr
+  | Typdec of name * defined_typ
+  | Unitexpr
   (* | Binop of bop * expr * expr 
   | Couple of expr * expr
   | Fst of expr
@@ -22,25 +49,7 @@ type expr =
   | Left of expr
   | Right of expr
   | Match of expr * string * expr * string * expr *)
-  | If of expr * expr * expr 
-  | Let of string * expr * expr
-  | Unitexpr
   
 
-
-type char_place = int * int
 type located_expr = char_place * expr
 
-type tconst =
-  | TInt 
-  | TBool
-  | TUnit
-
-type typ =
-  | TVar of int
-  | TConst of tconst 
-  | TArrow of typ * typ
-  (* | Nuplet of typ array *)
-  | TForall of id list * typ
-
-type located_typ = char_place * typ

@@ -1,5 +1,6 @@
 open Ast
-open Main
+open Parse
+open TypUtil
 
 module IntSet = Set.Make(Int)
 
@@ -13,41 +14,6 @@ let next_varname () = (* We'll consider that it gaves us a fresh variable (that'
   let v = !varname in 
   varname := !varname + 1;
   TVar v
-
-let rec print_typ = function
-  | TConst (TInt) -> print_string "TInt"
-  | TConst (TBool) -> print_string "TBool"
-  | TConst (TUnit) -> print_string "TUnit"
-  | TVar n -> Printf.printf "TVar %d" n
-  | TArrow (t1, t2) ->
-    print_char '(';
-    print_typ t1;
-    print_string " -> ";
-    print_typ t2;
-    print_char ')'
-  | TForall (l, t) ->
-    print_string "TForall ";
-    List.iter (Printf.printf "'%d ") l;
-    print_string ". ";
-    print_typ t
-
-let print_constraints =
-  List.iter (fun (t1, t2) ->
-    print_typ t1;
-    print_string " = ";
-    print_typ t2;
-    print_newline ()
-  )
-
-let rec print_substitutions = function
-  | [] -> print_newline ()
-  | (t, x) :: q ->
-    print_char '{';
-    print_typ t;
-    print_char '/';
-    print_int x;
-    print_string "}; ";
-    print_substitutions q
 
 (** [include_var_typ t v] return true if [v] occur in [t] as a [TVar v], otherwise it returns false. *)
 let rec include_var_typ t v =
@@ -76,25 +42,25 @@ and substitute_typ t' x t =
 
 (** [unify c] returns a list of subtitutions which unify the set of constraints. *)
 let unify (c: constraints): substitution list =
-let rec aux c subs =
-  match c with
-  | [] -> subs
-  | (t1, t2) :: q ->
-    match t1, t2 with
-    | TConst TInt, TConst TInt | TConst TBool, TConst TBool | TConst TUnit, TConst TUnit -> aux q subs (* Ignoring, trivial case *)
-    | TVar n1, TVar n2 when n1 = n2 -> aux q subs (* Same, but need a when... *)
-    | TVar x, t when not (include_var_typ t x) -> (* x and t if x doesn't occur in t *)
-      aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
-    | t, TVar x when not (include_var_typ t x) -> (* Same, but reversed (the when forced me to do like this) *)
-      aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
-    | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
-    | TForall _, _ | _, TForall _ -> failwith "Nop" (* Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created *)
-    | _ -> (* No case found, no unifier. *)
-      print_string "No unifier: ";
-      print_typ t1; print_string " <> "; print_typ t2; print_newline ();
-      failwith "Failed."
-in
-aux c []
+  let rec aux c subs =
+    match c with
+    | [] -> subs
+    | (t1, t2) :: q ->
+      match t1, t2 with
+      | TConst TInt, TConst TInt | TConst TBool, TConst TBool | TConst TUnit, TConst TUnit -> aux q subs (* Ignoring, trivial case *)
+      | TVar n1, TVar n2 when n1 = n2 -> aux q subs (* Same, but need a when... *)
+      | TVar x, t when not (include_var_typ t x) -> (* x and t if x doesn't occur in t *)
+        aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
+      | t, TVar x when not (include_var_typ t x) -> (* Same, but reversed (the when forced me to do like this) *)
+        aux (List.map (fun (t1, t2) -> (substitute_typ t x t1, substitute_typ t x t2)) q) ((t, x) :: subs)
+      | TArrow (t1, t2), TArrow (t1', t2') -> aux ((t1, t1') :: (t2, t2') :: q) subs (* a->b = c->d <=> a = c && b = d *)
+      | TForall _, _ | _, TForall _ -> failwith "Nop" (* Shouldn't happen, no contraints created on let ... in, or this is the only case where forall are created *)
+      | _ -> (* No case found, no unifier. *)
+        print_string "No unifier: ";
+        print_typ t1; print_string " <> "; print_typ t2; print_newline ();
+        failwith "Failed."
+  in
+  aux c []
 
 (** [instantiate t] gives a new type instance based on [t] which is a TForall.
     If [t] isn't a TForall, returns [t] itself. *)
@@ -139,6 +105,7 @@ let rec infer_constraints (tenv: typ_env) (e: expr): (constraints * typ) =
   | Fun (x, e) -> infer_fun tenv x e
   | App (e1, e2) -> infer_app tenv e1 e2 
   | Let (x, e1, e2) -> infer_let tenv x e1 e2
+  | Typdec _ -> failwith "stfu"
   (* | Binop (_, _, _) -> assert false *)
     (* infer_bop tenv bop e1 e2 *)
 

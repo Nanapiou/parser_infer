@@ -6,12 +6,18 @@ open Ast
 let rec make_apply e = function
   | [] -> failwith "precondition violated"
   | [e'] -> App (e, e')
-	| h :: ((_ :: _) as t) -> make_apply (App (e, h)) t
+  | h :: ((_ :: _) as t) -> make_apply (App (e, h)) t
 %}
 
 %token EOF
+%token TYPE
+%token INT_TYPE
+%token FLOAT_TYPE
+%token UNIT_TYPE
+%token BOOL_TYPE
 %token <int> INT 
 %token <string> ID
+%token <string> CAPID
 %token LPAREN RPAREN
 %token ADD MULT LEQ
 %token FUN ARROW
@@ -19,14 +25,15 @@ let rec make_apply e = function
 // %token COMA
 // %token FST SND
 // %token LEFT RIGHT
-// %token MATCH WITH VERTBAR
+// %token MATCH WITH
+%token VERTBAR
 %token IF THEN ELSE
 %token LET EQUALS IN
 %token UNIT
 
-// %left ADD 
-// %left MULT 
-// %left LEQ
+%left ADD 
+%left MULT 
+%left LEQ
 
 %start <Ast.expr> prog
 
@@ -39,26 +46,30 @@ prog:
 expr:
 	| e = simpl_expr { e }
 	| e = simpl_expr; es = simpl_expr+ { make_apply e es }
-	// | FST; e = simpl_expr { Fst (e) }
-	// | SND; e = simpl_expr { Snd (e) }
-	// | LEFT; e = simpl_expr { Left (e) }
-	// | RIGHT; e = simpl_expr { Right (e) }
 	| FUN; x = ID; ARROW; e = expr { Fun (x, e) }
-	// | e1 = expr; ADD; e2 = expr { Binop (Add, e1, e2) }
-	// | e1 = expr; LEQ; e2 = expr { Binop (Leq, e1, e2) }
-	// | e1 = expr; MULT; e2 = expr { Binop (Mult, e1, e2) }
 	| LET; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (id, e1, e2) }
 	| IF; e1 = expr; THEN; e2 = expr; ELSE; e3 = expr { If (e1, e2, e3) }
-	// | MATCH; e = expr; WITH; VERTBAR?; LEFT; x1 = ID; ARROW; e1 = expr; VERTBAR; RIGHT; x2 = ID; ARROW; e2 = expr { Match (e, x1, e1, x2, e2) }
+	| TYPE; id = ID; EQUALS; t = type_dec { Typdec (id, t) }
+	;
+
+type_dec:
+	| BOOL_TYPE { TDSimple (TConst TBool) }
+	| INT_TYPE { TDSimple (TConst TInt) }
+	| UNIT_TYPE { TDSimple (TConst TUnit) }
+	| UNIT_TYPE { TDSimple (TConst TFloat) }
 	;
 
 simpl_expr:
-  	// | LPAREN; e1 = expr; COMA; e2 = expr; RPAREN { Couple (e1, e2) } 
 	| UNIT { Unitexpr }
+	| LPAREN; e = expr; RPAREN { e }
+
 	| LPAREN; ADD; RPAREN { Var ("( + )") }
 	| LPAREN; MULT; RPAREN { Var ("( * )") }
 	| LPAREN; LEQ; RPAREN { Var ("( <= )") }
-  	| LPAREN; e = expr; RPAREN { e } 
+	| e1 = simpl_expr; ADD; e2 = simpl_expr { App (App (Var ("( + )"), e1), e2) }
+	| e1 = simpl_expr; LEQ; e2 = simpl_expr { App (App (Var ("( <= )"), e1), e2) }
+	| e1 = simpl_expr; MULT; e2 = simpl_expr { App (App (Var ("( * )"), e1), e2) }
+  	
 	| TRUE { Bool true }
 	| FALSE { Bool false }
 	| i = INT { Int i }

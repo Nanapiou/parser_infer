@@ -1,6 +1,5 @@
 open Ast
-open Main
-
+open Parse
 
 (** [env] is the type of an environment, which maps
     a string to a value. *)
@@ -45,6 +44,7 @@ let rec eval (env : env) (e : expr) : value = match e with
   | If (e1, e2, e3) -> eval_if env e1 e2 e3
   | Let (x, e1, e2) -> eval_let env x e1 e2
   | Unitexpr -> VUnit
+  | Typdec _ -> failwith "stfu"
 
 (** [eval_var env x] is the [v] such that [<env, x> ==> v]. *)
 and eval_var env x = 
