@@ -22,11 +22,10 @@ type typ =
   | TForall of id list * typ
   (* | TTimes of typ array *)
 
-type enumerate_typ =
-  | TConstructor of name * typ
-  | TOr of enumerate_typ list
-
 type located_typ = char_place * typ
+
+type constructor = name * (typ option)
+type enumerate_typ = constructor list
 
 type defined_typ =
   | TDSimple of typ
@@ -40,7 +39,7 @@ type expr =
   | Bool of bool
   | If of expr * expr * expr 
   | Let of name * expr * expr
-  | Typdec of name * defined_typ
+  | Typdec of name * defined_typ * expr
   | Unitexpr
   (* | Binop of bop * expr * expr 
   | Couple of expr * expr

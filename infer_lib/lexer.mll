@@ -2,7 +2,7 @@
 open Parser
 }
 
-let white = [' ' '\t']+
+let white = [' ' '\t' '\n']+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+
 let capid = ['A'-'Z'] letter*
@@ -38,7 +38,9 @@ rule read =
   | "else" { ELSE }
   | "let" { LET }
   | "=" { EQUALS }
+  | "of" { OF }
   | "in" { IN }
+  | ";" { SEMICOLON }
   | "()" { UNIT }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | capid { CAPID (Lexing.lexeme lexbuf) }

@@ -2,7 +2,7 @@ open Ast
 open Parse
 
 module Parse = Parse
-module TypUtil = TypUtil
+module Util = Util
 module IntSet = Set.Make(Int)
 
 exception NoUnifier of typ * typ

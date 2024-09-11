@@ -9,6 +9,7 @@ let rec make_apply e = function
   | h :: ((_ :: _) as t) -> make_apply (App (e, h)) t
 %}
 
+%token SEMICOLON
 %token EOF
 %token TYPE
 %token INT_TYPE
@@ -18,6 +19,8 @@ let rec make_apply e = function
 %token <int> INT 
 %token <string> ID
 %token <string> CAPID
+
+
 %token LPAREN RPAREN
 %token ADD MULT LEQ
 %token FUN ARROW
@@ -26,13 +29,14 @@ let rec make_apply e = function
 // %token FST SND
 // %token LEFT RIGHT
 // %token MATCH WITH
-%token VERTBAR
+%token VERTBAR OF
 %token IF THEN ELSE
 %token LET EQUALS IN
 %token UNIT
 
 %left ADD 
-%left MULT 
+%left MULT
+%right ARROW
 %left LEQ
 
 %start <Ast.expr> prog
@@ -48,15 +52,9 @@ expr:
 	| e = simpl_expr; es = simpl_expr+ { make_apply e es }
 	| FUN; x = ID; ARROW; e = expr { Fun (x, e) }
 	| LET; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (id, e1, e2) }
+	| LET; id = ID; EQUALS; e1 = expr; SEMICOLON; SEMICOLON; e2 = expr { Let (id, e1, e2) }
 	| IF; e1 = expr; THEN; e2 = expr; ELSE; e3 = expr { If (e1, e2, e3) }
-	| TYPE; id = ID; EQUALS; t = type_dec { Typdec (id, t) }
-	;
-
-type_dec:
-	| BOOL_TYPE { TDSimple (TConst TBool) }
-	| INT_TYPE { TDSimple (TConst TInt) }
-	| UNIT_TYPE { TDSimple (TConst TUnit) }
-	| UNIT_TYPE { TDSimple (TConst TFloat) }
+	| TYPE; id = ID; EQUALS; t = typ_def; SEMICOLON; SEMICOLON; e = expr? { Typdec (id, t, match e with None -> Unitexpr | Some e -> e) }
 	;
 
 simpl_expr:
@@ -74,4 +72,22 @@ simpl_expr:
 	| FALSE { Bool false }
 	| i = INT { Int i }
 	| x = ID { Var x }
-  ;
+	;
+
+typ_def:
+	| t = simple_typ { TDSimple t }
+	| l = enumerate_typ+ { TDEnumerate l }
+	;
+
+simple_typ:
+	| BOOL_TYPE { TConst TBool }
+	| INT_TYPE { TConst TInt }
+	| UNIT_TYPE { TConst TUnit }
+	| FLOAT_TYPE { TConst TFloat }
+	| t1 = simple_typ; ARROW; t2 = simple_typ { TArrow (t1, t2) }
+	;
+
+enumerate_typ:
+	| VERTBAR; x = CAPID; OF; t = simple_typ { (x, Some t) }
+	| VERTBAR; x = CAPID { (x, None) }
+	;
