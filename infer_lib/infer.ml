@@ -7,6 +7,7 @@ module IntSet = Set.Make(Int)
 
 exception NoUnifier of typ * typ
 
+type constructor_env = typ Env.t
 type typ_env = typ Env.t
 type constraints = (typ * typ) list (* Each (t, t) should have t = t *)
 type substitution = typ * id (* A (t, 'x) means that we should subst t by 'x *)

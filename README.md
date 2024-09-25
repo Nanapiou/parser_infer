@@ -90,5 +90,6 @@ On notera $V(e)$ l'ensemble des variables présentes dans l'expression $e$, et $
 #### `instantiate`
 
 
+#### Usefull links
 
-
+- https://okmij.org/ftp/ML/generalization.html
