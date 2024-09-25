@@ -11,3 +11,6 @@ let rec get_digits = function
   | l -> ([], l)
 
 let list_to_int = List.fold_left (( + ) @. (( * ) 10)) 0
+
+let read_int l =
+  let l, rest = get_digits l in (list_to_int l, rest)
