@@ -31,7 +31,7 @@ let rec gen: typ -> typ = function
   | TArrow (ty1,ty2) -> TArrow (gen ty1, gen ty2)
   | ty -> ty
 
-let inst = 
+let inst ty = 
   let rec loop subst = function
     | QVar name -> 
         begin
@@ -46,7 +46,7 @@ let inst =
         let (ty2,subst) = loop subst ty2 in
         (TArrow (ty1,ty2), subst)
     | ty -> (ty, subst)
-  in fun ty -> fst (loop [] ty) 
+  in fst (loop [] ty) 
 
 
 let rec occurs (tvr: tv ref): typ -> unit = function
