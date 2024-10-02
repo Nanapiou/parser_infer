@@ -5,7 +5,7 @@ open Parser
 let white = [' ' '\t' '\n']+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+
-let typid = ' letter+
+let typid = '\'' letter+
 let capid = ['A'-'Z'] letter*
 let digit = '-'? ['0'-'9']+
 

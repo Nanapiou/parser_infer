@@ -1,4 +1,4 @@
-(lang dune 3.13)
+(lang dune 3.16)
 (package
  (name type_inference)
  (synopsis "Let's infer")
