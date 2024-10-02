@@ -6,7 +6,7 @@ let rec print_typ =
   | TConst (TInt) -> print_string "TInt"
   | TConst (TBool) -> print_string "TBool"
   | QVar x -> printf "QVar %s" x
-  | TVar ({ contents = Unbound (x, l) }) -> printf "TVar %s %d" x l
+  | TVar ({ contents = Unbound (x, l) }) -> printf "%s.%d" x l
   | TVar ({ contents = Link t }) -> print_typ t
   | TArrow (t1, t2) ->
     print_char '(';

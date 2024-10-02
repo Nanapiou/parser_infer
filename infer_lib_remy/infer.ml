@@ -3,6 +3,9 @@ module StringDict = Map.Make(String)
 module Util = Util
 module Parse = Parse
 
+exception NoUnifier of typ * typ
+exception OccurCheck
+
 
 type env = typ StringDict.t
 
@@ -47,7 +50,7 @@ let inst =
 
 
 let rec occurs (tvr: tv ref): typ -> unit = function
-  | TVar tvr' when tvr == tvr' -> failwith "occurs check"
+  | TVar tvr' when tvr == tvr' -> raise OccurCheck
   | TVar ({contents = Unbound (name, l')} as tv) ->
       let min_level = 
         (match !tvr with Unbound (_,l) -> min l l' | _ -> l') in
@@ -56,7 +59,6 @@ let rec occurs (tvr: tv ref): typ -> unit = function
   | TArrow (t1,t2)            -> occurs tvr t1; occurs tvr t2
   | _ -> ()
 
-exception NoUnifier of typ * typ
 
 let rec unify (t1: typ) (t2: typ): unit = 
   if t1 = t2 then () else match t1, t2 with
