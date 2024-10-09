@@ -1,5 +1,6 @@
 type level = int
-
+let generic_level = 100000000           (* as in OCaml typing/btype.ml *)
+let marked_level  = -1
 
 type varname = string
 type expr =
@@ -16,6 +17,7 @@ type typ =
   | TVar of tv ref
   | QVar of qname
   | TConst of tconst
-  | TArrow of typ * typ 
+  | TArrow of typ * typ
 and tv = Unbound of qname * level | Link of typ
+and levels = {mutable level_old : level; mutable level_new : level}
 and tconst = TInt | TBool
