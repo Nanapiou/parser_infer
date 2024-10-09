@@ -1,1 +1,1 @@
-fun x -> let y = let z = x (fun x -> x) in z in y
+let x = 8 in if let x = true in x then x else false

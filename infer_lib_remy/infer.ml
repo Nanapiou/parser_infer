@@ -4,7 +4,7 @@ module Util = Util
 module Parse = Parse
 
 exception NoUnifier of typ * typ
-exception OccurCheck
+exception OccurCheck of tv ref
 
 
 type env = typ StringDict.t
@@ -32,13 +32,14 @@ let rec gen: typ -> typ = function
   | ty -> ty
 
 let inst ty = 
-  let rec loop subst = function
+  let rec loop (subst: typ StringDict.t) = function
     | QVar name -> 
         begin
-          try (List.assoc name subst, subst)
-          with Not_found ->
+          match StringDict.find_opt name subst with
+          | Some t -> (t, subst)
+          | None -> 
             let tv = newvar () in
-            (tv, (name,tv)::subst)
+            (tv, StringDict.add name tv subst)
         end
     | TVar {contents = Link ty} -> loop subst ty
     | TArrow (ty1,ty2) -> 
@@ -46,11 +47,11 @@ let inst ty =
         let (ty2,subst) = loop subst ty2 in
         (TArrow (ty1,ty2), subst)
     | ty -> (ty, subst)
-  in fst (loop [] ty) 
+  in fst (loop StringDict.empty ty) 
 
 
 let rec occurs (tvr: tv ref): typ -> unit = function
-  | TVar tvr' when tvr == tvr' -> raise OccurCheck
+  | TVar tvr' when tvr == tvr' -> raise (OccurCheck tvr)
   | TVar ({contents = Unbound (name, l')} as tv) ->
       let min_level = 
         (match !tvr with Unbound (_,l) -> min l l' | _ -> l') in

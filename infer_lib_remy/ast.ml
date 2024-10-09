@@ -1,6 +1,7 @@
-type varname = string
 type level = int
 
+
+type varname = string
 type expr =
   | Var of varname
   | Fun of varname * expr
