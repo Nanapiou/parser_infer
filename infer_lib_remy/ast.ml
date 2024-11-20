@@ -15,9 +15,8 @@ type expr =
 type qname = string
 type typ =
   | TVar of tv ref
-  | QVar of qname
   | TConst of tconst
-  | TArrow of typ * typ
+  | TArrow of typ * typ * levels
 and tv = Unbound of qname * level | Link of typ
 and levels = {mutable level_old : level; mutable level_new : level}
 and tconst = TInt | TBool

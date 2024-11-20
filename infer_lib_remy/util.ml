@@ -5,11 +5,11 @@ let rec print_typ =
   function
   | TConst (TInt) -> print_string "TInt"
   | TConst (TBool) -> print_string "TBool"
-  | QVar x -> printf "QVar %s" x
+  (* | QVar x -> printf "QVar %s" x *)
   | TVar ({ contents = Unbound (x, l) }) -> printf "%s.%d" x l
   | TVar ({ contents = Link t }) -> print_typ t
-  | TArrow (t1, t2) ->
-    print_char '(';
+  | TArrow (t1, t2, {level_old; level_new}) ->
+    Printf.printf "((%d,%d) " level_old level_new;
     print_typ t1;
     print_string " -> ";
     print_typ t2;
@@ -43,3 +43,17 @@ let rec print_expr = function
     print_string ") in (";
     print_expr e2;
     print_char ')'
+
+let rec repr = function
+  | TVar ({ contents = Link t } as tvr) ->
+    let t = repr t in 
+    tvr := Link t;
+    t
+  | t -> t
+
+
+(* get the level of a normalized type, which is not a bound TVar *)
+let get_level : typ -> level = function
+  | TVar {contents = Unbound (_, l)} -> l
+  | TArrow (_, _, ls) -> ls.level_new
+  | _ -> failwith "get_level: not a normalized type"

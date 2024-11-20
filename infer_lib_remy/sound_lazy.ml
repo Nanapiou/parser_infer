@@ -15,7 +15,6 @@ type exp =
   | App of exp * exp                    (* application: e1 e2      *)
   | Lam of varname * exp                (* abstraction: fun x -> e *)
   | Let of varname * exp * exp          (* let x = e in e2         *)
-;;
 
 (* The types to infer *)
 (* Types without quantified variables are simple types;
