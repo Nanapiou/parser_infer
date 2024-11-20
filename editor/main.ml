@@ -2,7 +2,9 @@ open Tk
 
 let top = openTk ()
 
+
 let text = Text.create ~width:150 ~height:50 top
+let () = Text.tag_configure ~tag:"red" ~foreground:`Red text
 
 let readFile filename =
   let ch = open_in_bin filename in
