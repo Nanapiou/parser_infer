@@ -1,0 +1,7 @@
+(executable
+ (public_name editor)
+ (name main)
+ (libraries labltk)
+ ; (flags (:standard -warn-error -32..39))
+)
+
