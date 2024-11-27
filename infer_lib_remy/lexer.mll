@@ -6,6 +6,7 @@ let white = [' ' '\t' '\n']+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+
 let digit = '-'? ['0'-'9']+
+let string = '"' [^'"']* '"'
 
 rule read = 
   parse
@@ -33,6 +34,7 @@ rule read =
   | "=" { EQUALS }
   | "in" { IN }
   | ";" { SEMICOLON }
+  | string { STRING (String.sub (Lexing.lexeme lexbuf) 1 (String.length (Lexing.lexeme lexbuf) - 2)) }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF }

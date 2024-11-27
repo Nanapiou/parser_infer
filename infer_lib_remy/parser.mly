@@ -13,6 +13,7 @@ let rec make_apply e = function
 %token EOF
 %token <int> INT 
 %token <string> ID
+%token <string> STRING
 
 
 %token LPAREN RPAREN
@@ -62,5 +63,6 @@ simpl_expr:
 	| TRUE { Bool true }
 	| FALSE { Bool false }
 	| i = INT { Int i }
+	| s = STRING { String s }
 	| x = ID { Var x }
 	;

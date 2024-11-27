@@ -1,8 +1,12 @@
 open Ast 
 open Util
 module StringDict = Map.Make(String)
+
+(* To use them outside the lib *)
 module Util = Util
 module Parse = Parse
+module Lexer = Lexer
+module Parser = Parser
 
 exception NoUnifier of typ * typ
 exception OccurCheck of typ
@@ -221,6 +225,7 @@ and unify_lev l ty1 ty2 =
 let rec infer_base (tenv: env): expr -> typ = function
   | Int _ -> TConst TInt
   | Bool _ -> TConst TBool
+  | String _ -> TConst TString
   | Var x -> inst @@ StringDict.find x tenv
   | Fun (x, e) -> infer_fun tenv x e
   | Let (x, e, e') -> infer_let tenv x e e'

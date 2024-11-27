@@ -1,4 +1,4 @@
 (executable
  (name main)
  (public_name sample_infer)
- (libraries infer infer_noob))
+ (libraries infer))

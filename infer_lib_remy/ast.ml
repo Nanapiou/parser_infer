@@ -9,6 +9,7 @@ type expr =
   | App of expr * expr
   | Int of int
   | Bool of bool
+  | String of string
   | If of expr * expr * expr 
   | Let of varname * expr * expr
 
@@ -19,4 +20,4 @@ type typ =
   | TArrow of typ * typ * levels
 and tv = Unbound of qname * level | Link of typ
 and levels = {mutable level_old : level; mutable level_new : level}
-and tconst = TInt | TBool
+and tconst = TInt | TBool | TString

@@ -1,1 +1,1 @@
-let x = 8 in (if (let x = true in x) then x else 0)
+let x = "test" in (if (let x = true in x) then x else "boo")

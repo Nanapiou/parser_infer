@@ -1,7 +1,7 @@
 (executable
- (public_name editor)
+ (public_name tests)
  (name main)
- (libraries infer labltk)
+ (libraries infer)
  ; (flags (:standard -warn-error -32..39))
 )
 
