@@ -4,7 +4,7 @@ let top = openTk ()
 
 
 let text = Text.create ~width:150 ~height:50 top
-let () = Text.tag_configure ~tag:"red" ~foreground:`Red text
+let () = Text.tag_configure ~tag:"digit" ~foreground:`Blue text
 
 let readFile filename =
   let ch = open_in_bin filename in
@@ -23,7 +23,7 @@ let openFile () =
   if f = "" then () else
   Text.delete ~start:(`Atxy (0, 0), [`Linestart]) ~stop:(`End, [`Linestart]) text;
   let content = readFile f in
-  Text.insert ~tags:["red"] ~index:(`Atxy (0, 0), [`Linestart]) ~text:content text
+  Text.insert ~tags:["digit"] ~index:(`Atxy (0, 0), [`Linestart]) ~text:content text
 
 let saveFile () =
   let f = Tk.getSaveFile ~parent:top () in
