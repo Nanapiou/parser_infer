@@ -33,12 +33,13 @@ let new_arrow ty1 ty2: typ =
   TArrow(ty1, ty2, {level_new = !current_level; level_old = !current_level})
 
 
-(* Delayed occurs check. We do not do the occurs check when unifying
-   a free type variable. Therefore, we may construct a cyclic type.
-   The following function, executed only at the end of the type checking,
-   checks for no cycles in the type.
-   Incidentally, OCaml does allow cycles in the type: types are generally
-   (equi-)recursive in OCaml.
+(**
+Delayed occurs check. We do not do the occurs check when unifying
+a free type variable. Therefore, we may construct a cyclic type.
+The following function, executed only at the end of the type checking,
+checks for no cycles in the type.
+Incidentally, OCaml does allow cycles in the type: types are generally
+(equi-)recursive in OCaml.
 *)
 let rec cycle_free : typ -> unit = function
   | TVar {contents = Unbound _} | TConst _ -> ()

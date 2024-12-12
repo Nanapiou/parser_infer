@@ -1,6 +1,6 @@
 type level = int
 let generic_level = 100000000           (* as in OCaml typing/btype.ml *)
-let marked_level  = -1
+let marked_level = -1
 
 type varname = string
 type expr =
