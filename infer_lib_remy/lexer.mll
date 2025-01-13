@@ -4,7 +4,7 @@ open Parser
 
 let white = [' ' '\t' '\n']+
 let letter = ['a'-'z' 'A'-'Z']
-let id = letter+
+let id = letter (letter | ['0'-'9'] | '_')*
 let digit = '-'? ['0'-'9']+
 let string = '"' [^'"']* '"'
 

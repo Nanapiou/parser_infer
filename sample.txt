@@ -1,1 +1,1 @@
-let x = "test" in (if (let x = true in x) then x else "boo")
+let a = 1 in (fun z -> if true then z else a) 
