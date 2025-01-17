@@ -144,7 +144,7 @@ let force_delayed_adjustments () =
 
 
 
-let gen : typ -> unit = fun ty ->
+let gen (ty: typ): unit = 
   force_delayed_adjustments ();
   let rec loop ty =
     match repr ty with
