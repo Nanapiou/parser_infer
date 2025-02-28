@@ -2,5 +2,7 @@
 
 pkgs.mkShell {
   buildInputs = with pkgs; [
+    tcl
+    tk
   ];
 }
