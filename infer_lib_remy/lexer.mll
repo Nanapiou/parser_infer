@@ -20,8 +20,8 @@ rule read =
   | "->" { ARROW }
   | "true" { TRUE }
   | "false" { FALSE }
-  (* | "," { COMA }
-  | "fst" { FST }
+  | "," { COMA }
+  (* | "fst" { FST }
   | "snd" { SND }
   | "Left" { LEFT }
   | "Right" { RIGHT }

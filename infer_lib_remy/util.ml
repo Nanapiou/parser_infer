@@ -22,6 +22,7 @@ let print_token = function
   | ARROW -> print_endline "ARROW"
   | ADD -> print_endline "ADD"
   | STRING s -> Printf.printf "STRING %s\n" s
+  | COMA -> print_endline "COMA"
 
 let rec print_typ =
   let open Printf in
@@ -37,6 +38,11 @@ let rec print_typ =
     print_typ t1;
     print_string " -> ";
     print_typ t2;
+    print_char ')'
+  | TTuple (l, {level_old; level_new}) ->
+    Printf.printf "((%d,%d) " level_old level_new;
+    print_typ (List.hd l);
+    List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
     print_char ')'
 
 let rec print_expr = function
@@ -67,6 +73,11 @@ let rec print_expr = function
     print_expr e1;
     print_string ") in (";
     print_expr e2;
+    print_char ')'
+  | Tuple l ->
+    print_char '(';
+    print_expr (List.hd l);
+    List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
     print_char ')'
 
 let rec repr = function

@@ -30,6 +30,10 @@ let newvar () = TVar (ref (Unbound (get_sym (), !current_level)))
 let new_arrow ty1 ty2 : typ =
   TArrow (ty1, ty2, { level_new = !current_level; level_old = !current_level })
 
+
+let new_tuple l : typ =
+  TTuple (l, { level_new = !current_level; level_old = !current_level })
+
 (** Delayed occurs check. We do not do the occurs check when unifying a free
     type variable. Therefore, we may construct a cyclic type. The following
     function, executed only at the end of the type checking, checks for no
@@ -38,13 +42,18 @@ let new_arrow ty1 ty2 : typ =
 let rec cycle_free : typ -> unit = function
   | TVar { contents = Unbound _ } | TConst _ -> ()
   | TVar { contents = Link ty } -> cycle_free ty
-  | TArrow (_, _, ls) when ls.level_new = marked_level ->
-      failwith "occurs check"
+  | (TArrow (_, _, ls) as t) when ls.level_new = marked_level ->
+      raise (OccurCheck t)
   | TArrow (t1, t2, ls) ->
       let level = ls.level_new in
       ls.level_new <- marked_level;
       cycle_free t1;
       cycle_free t2;
+      ls.level_new <- level
+  | TTuple (l, ls) ->
+      let level = ls.level_new in
+      ls.level_new <- marked_level;
+      List.iter cycle_free l;
       ls.level_new <- level
 
 (*
@@ -73,7 +82,7 @@ let update_level (l : level) : typ -> unit = function
   | TVar ({ contents = Unbound (n, l') } as tvr) ->
       assert (not (l' = generic_level));
       if l < l' then tvr := Unbound (n, l)
-  | TArrow (_, _, ls) as ty ->
+  | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) ->
       assert (not (ls.level_new = generic_level));
       if ls.level_new = marked_level then raise (OccurCheck ty);
       if l < ls.level_new then (
@@ -81,7 +90,7 @@ let update_level (l : level) : typ -> unit = function
           to_be_level_adjusted := ty :: !to_be_level_adjusted;
         ls.level_new <- l)
   | TConst _ -> ()
-  | _ -> failwith "Update levels"
+  | _ -> failwith "Update levels, maybe a catch-all math"
 
 (* Sound generalization: generalize (convert to quantified vars) 
    only those free TVars whose level is greater than the current.
@@ -110,17 +119,17 @@ let force_delayed_adjustments () =
     | TVar ({ contents = Unbound (name, l) } as tvr) when l > level ->
         tvr := Unbound (name, level);
         acc
-    | TArrow (_, _, ls) when ls.level_new = marked_level ->
+    | TArrow (_, _, ls) | TTuple (_, ls) when ls.level_new = marked_level ->
         raise (OccurCheck ty)
-    | TArrow (_, _, ls) as ty ->
-        if ls.level_new > level then ls.level_new <- level;
+    | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) ->
+      if ls.level_new > level then ls.level_new <- level;
         adjust_one acc ty
     | _ -> acc
   (* only deals with composite types *)
   and adjust_one acc = function
-    | TArrow (_, _, ls) as ty when ls.level_old <= !current_level ->
+    | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) when ls.level_old <= !current_level ->
         ty :: acc (* update later *)
-    | TArrow (_, _, ls) when ls.level_old = ls.level_new ->
+    | TArrow (_, _, ls) | TTuple (_, ls) when ls.level_old = ls.level_new ->
         acc (* already updated *)
     | TArrow (ty1, ty2, ls) ->
         let level = ls.level_new in
@@ -130,7 +139,14 @@ let force_delayed_adjustments () =
         ls.level_new <- level;
         ls.level_old <- level;
         acc
-    | _ -> assert false
+    | TTuple (l, ls) ->
+        let level = ls.level_new in
+        ls.level_new <- marked_level;
+        let acc = List.fold_left (fun acc cur -> loop acc level cur) acc l in
+        ls.level_new <- level;
+        ls.level_old <- level;
+        acc
+    | _ -> failwith "Delayed adjustment failed, maybe catch-all case"
   in
   to_be_level_adjusted := List.fold_left adjust_one [] !to_be_level_adjusted
 
@@ -147,6 +163,12 @@ let gen (ty : typ) : unit =
         let l = max (get_level ty1) (get_level ty2) in
         ls.level_old <- l;
         ls.level_new <- l (* set the exact level upper bound *)
+    | TTuple (l, ls) when ls.level_new > !current_level ->
+        let l = List.map repr l in
+        List.iter loop l;
+        let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
+        ls.level_old <- lvl;
+        ls.level_new <- lvl (* set the exact level upper bound *)
     | _ -> ()
   in
   loop ty
@@ -168,6 +190,10 @@ let inst (ty : typ) : typ =
         let ty1, subst = loop subst ty1 in
         let ty2, subst = loop subst ty2 in
         (new_arrow ty1 ty2, subst)
+    | TTuple (l, ls) when ls.level_new = generic_level ->
+        let flip (a, b) = b, a in
+        let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
+        (new_tuple l, subst)
     | ty -> (ty, subst)
   in
   fst (loop StringDict.empty (repr ty))
@@ -209,6 +235,15 @@ let rec unify (t1 : typ) (t2 : typ) : unit =
         unify_lev min_level tyl2 tyr2;
         ll.level_new <- min_level;
         lr.level_new <- min_level
+    | TTuple (l1, ll), TTuple (l2, lr) ->
+        if ll.level_new = marked_level then raise (OccurCheck t1)
+        else if lr.level_new = marked_level then raise (OccurCheck t2);
+        let min_level = min ll.level_new lr.level_new in
+        ll.level_new <- marked_level;
+        lr.level_new <- marked_level;
+        List.iter2 (unify_lev min_level) l1 l2;
+        ll.level_new <- min_level;
+        lr.level_new <- min_level
     | TConst c1, TConst c2 when c1 = c2 -> ()
     | _ -> raise (NoUnifier (t1, t2))
 
@@ -223,6 +258,7 @@ let rec infer_base (tenv : env) : expr -> typ = function
   | String _ -> TConst TString
   | Var x -> inst @@ StringDict.find x tenv
   | Fun (x, e) -> infer_fun tenv x e
+  | Tuple l -> infer_tuple tenv l;
   | Let (x, e, e') -> infer_let tenv x e e'
   | App (e, e') -> infer_app tenv e e'
   | If (eb, e, e') -> infer_if tenv eb e e'
@@ -231,6 +267,9 @@ and infer_fun tenv x e =
   let ty_x = newvar () in
   let ty_e = infer_base (StringDict.add x ty_x tenv) e in
   new_arrow ty_x ty_e
+
+and infer_tuple tenv l =
+  new_tuple (List.map (infer_base tenv) l)
 
 and infer_let tenv x e e' =
   enter_level ();

@@ -14,6 +14,7 @@ type expr =
   | String of string
   | If of expr * expr * expr
   | Let of varname * expr * expr
+  | Tuple of expr list
 
 type qname = string
 
@@ -21,6 +22,7 @@ type typ =
   | TVar of tv ref
   | TConst of tconst
   | TArrow of typ * typ * levels
+  | TTuple of typ list * levels
 and tv = Unbound of qname * level | Link of typ
 and levels = { mutable level_old : level; mutable level_new : level }
 and tconst = TInt | TBool | TString

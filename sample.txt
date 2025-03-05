@@ -1,1 +1,1 @@
-let f = fun x -> x in if f true then f 8 else 0
+let x = 0 in if true then (x, "string") else (false, "pan")

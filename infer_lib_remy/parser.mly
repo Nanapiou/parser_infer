@@ -20,7 +20,7 @@ let rec make_apply e = function
 %token ADD MULT LEQ
 %token FUN ARROW
 %token TRUE FALSE
-// %token COMA
+%token COMA
 // %token FST SND
 // %token LEFT RIGHT
 // %token MATCH WITH
@@ -59,10 +59,13 @@ simpl_expr:
 	| e1 = simpl_expr; ADD; e2 = simpl_expr { App (App (Var ("( + )"), e1), e2) }
 	| e1 = simpl_expr; LEQ; e2 = simpl_expr { App (App (Var ("( <= )"), e1), e2) }
 	| e1 = simpl_expr; MULT; e2 = simpl_expr { App (App (Var ("( * )"), e1), e2) }
-  	
+  | LPAREN; e1 = expr; el = tuple_elt+; RPAREN { Tuple (e1 :: el) }  	
 	| TRUE { Bool true }
 	| FALSE { Bool false }
 	| i = INT { Int i }
 	| s = STRING { String s }
 	| x = ID { Var x }
 	;
+
+tuple_elt:
+	| COMA; e = expr { e }
