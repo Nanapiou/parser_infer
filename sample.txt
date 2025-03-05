@@ -1,1 +1,1 @@
-let a = 1 in (fun z -> if z then z else a) 
+let f = fun x -> x in if f true then f 8 else 0

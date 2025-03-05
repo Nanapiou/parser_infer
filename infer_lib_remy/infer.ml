@@ -75,7 +75,7 @@ let update_level (l : level) : typ -> unit = function
       if l < l' then tvr := Unbound (n, l)
   | TArrow (_, _, ls) as ty ->
       assert (not (ls.level_new = generic_level));
-      if ls.level_new = marked_level then failwith "occurs check";
+      if ls.level_new = marked_level then raise (OccurCheck ty);
       if l < ls.level_new then (
         if ls.level_new = ls.level_old then
           to_be_level_adjusted := ty :: !to_be_level_adjusted;
@@ -200,8 +200,8 @@ let rec unify (t1 : typ) (t2 : typ) : unit =
         update_level l t';
         tv := Link t'
     | TArrow (tyl1, tyl2, ll), TArrow (tyr1, tyr2, lr) ->
-        if ll.level_new = marked_level || lr.level_new = marked_level then
-          failwith "cycle: occurs check";
+        if ll.level_new = marked_level then raise (OccurCheck t1)
+        else if lr.level_new = marked_level then raise (OccurCheck t2);
         let min_level = min ll.level_new lr.level_new in
         ll.level_new <- marked_level;
         lr.level_new <- marked_level;

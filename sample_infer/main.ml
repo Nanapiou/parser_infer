@@ -10,3 +10,5 @@ let () = try
     print_endline "No unifier:";
     Util.print_typ t1; print_string " <> "; Util.print_typ t2
 
+let () = print_newline ()
+
