@@ -90,7 +90,7 @@ let update_level (l : level) : typ -> unit = function
           to_be_level_adjusted := ty :: !to_be_level_adjusted;
         ls.level_new <- l)
   | TConst _ -> ()
-  | _ -> failwith "Update levels, maybe a catch-all math"
+  | _ -> failwith "Update levels, maybe a catch-all match"
 
 (* Sound generalization: generalize (convert to quantified vars) 
    only those free TVars whose level is greater than the current.
@@ -124,7 +124,7 @@ let force_delayed_adjustments () =
     | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) ->
       if ls.level_new > level then ls.level_new <- level;
         adjust_one acc ty
-    | _ -> acc
+    | TConst _ | TVar _ -> acc
   (* only deals with composite types *)
   and adjust_one acc = function
     | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) when ls.level_old <= !current_level ->
@@ -169,7 +169,7 @@ let gen (ty : typ) : unit =
         let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
-    | _ -> ()
+    | TConst _ | TVar _ | TArrow _ | TTuple _ -> ()
   in
   loop ty
 
@@ -194,7 +194,7 @@ let inst (ty : typ) : typ =
         let flip (a, b) = b, a in
         let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
         (new_tuple l, subst)
-    | ty -> (ty, subst)
+    | (TVar _ as ty) | (TConst _ as ty) | (TArrow _ as ty) | (TTuple _ as ty) -> (ty, subst)
   in
   fst (loop StringDict.empty (repr ty))
 
