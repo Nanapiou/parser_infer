@@ -1,7 +1,6 @@
 (executable
  (public_name tests)
  (name main)
- (libraries infer)
+ (libraries infer lwt)
  ; (flags (:standard -warn-error -32..39))
-)
-
+ )
