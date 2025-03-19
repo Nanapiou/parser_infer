@@ -94,3 +94,4 @@ On notera $V(e)$ l'ensemble des variables présentes dans l'expression $e$, et $
 
 - https://okmij.org/ftp/ML/generalization.html
 - https://github.com/ocaml/ocaml/blob/ad2aecfab0a425ffbaa01dc22a5661adcbe88710/parsing/parsetree.mli
+- https://github.com/ocaml/ocaml/blob/trunk/typing/typecore.ml#L3716 *Inférence officielle*
