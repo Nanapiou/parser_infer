@@ -1,1 +1,1 @@
-let x = 0 in if true then (x, "string") else (false, "pan")
+let x = true in ()

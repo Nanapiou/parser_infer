@@ -40,7 +40,7 @@ let new_tuple l : typ =
     cycles in the type. Incidentally, OCaml does allow cycles in the type: types
     are generally (equi-)recursive in OCaml. *)
 let rec cycle_free : typ -> unit = function
-  | TVar { contents = Unbound _ } | TConst _ -> ()
+  | TVar { contents = Unbound _ } | TConstant _ -> ()
   | TVar { contents = Link ty } -> cycle_free ty
   | (TArrow (_, _, ls) as t) when ls.level_new = marked_level ->
       raise (OccurCheck t)
@@ -89,7 +89,7 @@ let update_level (l : level) : typ -> unit = function
         if ls.level_new = ls.level_old then
           to_be_level_adjusted := ty :: !to_be_level_adjusted;
         ls.level_new <- l)
-  | TConst _ -> ()
+  | TConstant _ -> ()
   | _ -> failwith "Update levels, maybe a catch-all match"
 
 (* Sound generalization: generalize (convert to quantified vars) 
@@ -124,7 +124,7 @@ let force_delayed_adjustments () =
     | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) ->
       if ls.level_new > level then ls.level_new <- level;
         adjust_one acc ty
-    | TConst _ | TVar _ -> acc
+    | TConstant _ | TVar _ -> acc
   (* only deals with composite types *)
   and adjust_one acc = function
     | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) when ls.level_old <= !current_level ->
@@ -169,7 +169,7 @@ let gen (ty : typ) : unit =
         let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
-    | TConst _ | TVar _ | TArrow _ | TTuple _ -> ()
+    | TConstant _ | TVar _ | TArrow _ | TTuple _ -> ()
   in
   loop ty
 
@@ -194,7 +194,7 @@ let inst (ty : typ) : typ =
         let flip (a, b) = b, a in
         let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
         (new_tuple l, subst)
-    | (TVar _ as ty) | (TConst _ as ty) | (TArrow _ as ty) | (TTuple _ as ty) -> (ty, subst)
+    | (TVar _ as ty) | (TConstant _ as ty) | (TArrow _ as ty) | (TTuple _ as ty) -> (ty, subst)
   in
   fst (loop StringDict.empty (repr ty))
 
@@ -244,7 +244,7 @@ let rec unify (t1 : typ) (t2 : typ) : unit =
         List.iter2 (unify_lev min_level) l1 l2;
         ll.level_new <- min_level;
         lr.level_new <- min_level
-    | TConst c1, TConst c2 when c1 = c2 -> ()
+    | TConstant c1, TConstant c2 when c1 = c2 -> ()
     | _ -> raise (NoUnifier (t1, t2))
 
 and unify_lev l ty1 ty2 =
@@ -253,9 +253,10 @@ and unify_lev l ty1 ty2 =
   unify ty1 ty2
 
 let rec infer_base (tenv : env) : expr -> typ = function
-  | Int _ -> TConst TInt
-  | Bool _ -> TConst TBool
-  | String _ -> TConst TString
+  | Int _ -> TConstant TInt
+  | Bool _ -> TConstant TBool
+  | String _ -> TConstant TString
+  | Unit -> TConstant TUnit
   | Var x -> inst @@ StringDict.find x tenv
   | Fun (x, e) -> infer_fun tenv x e
   | Tuple l -> infer_tuple tenv l;
@@ -290,7 +291,7 @@ and infer_if tenv eb e e' =
   let te = infer_base tenv e in
   let te' = infer_base tenv e' in
   let tret = newvar () in
-  unify (TConst TBool) teb;
+  unify (TConstant TBool) teb;
   unify te tret;
   unify te' tret;
   tret
@@ -298,10 +299,10 @@ and infer_if tenv eb e e' =
 let default_tenv =
   StringDict.empty
   |> StringDict.add "( + )"
-       (new_arrow (TConst TInt) (new_arrow (TConst TInt) (TConst TInt)))
+       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
   |> StringDict.add "( * )"
-       (new_arrow (TConst TInt) (new_arrow (TConst TInt) (TConst TInt)))
+       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
   |> StringDict.add "( <= )"
-       (new_arrow (TConst TInt) (new_arrow (TConst TInt) (TConst TBool)))
+       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TBool)))
 
 let infer (txt : string) = infer_base default_tenv (Parse.parse txt)

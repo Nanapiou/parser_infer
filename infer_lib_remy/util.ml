@@ -27,9 +27,10 @@ let print_token = function
 let rec print_typ =
   let open Printf in
   function
-  | TConst (TInt) -> print_string "TInt"
-  | TConst (TBool) -> print_string "TBool"
-  | TConst (TString) -> print_string "TString"
+  | TConstant (TInt) -> print_string "TInt"
+  | TConstant (TBool) -> print_string "TBool"
+  | TConstant (TString) -> print_string "TString"
+  | TConstant (TUnit) -> print_string "TUnit"
   (* | QVar x -> printf "QVar %s" x *)
   | TVar ({ contents = Unbound (x, l) }) -> printf "%s.%d" x l
   | TVar ({ contents = Link t }) -> print_typ t
@@ -79,6 +80,7 @@ let rec print_expr = function
     print_expr (List.hd l);
     List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
     print_char ')'
+  | Unit -> print_string "()"
 
 let rec repr = function
   | TVar ({ contents = Link t } as tvr) ->

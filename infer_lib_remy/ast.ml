@@ -15,14 +15,15 @@ type expr =
   | If of expr * expr * expr
   | Let of varname * expr * expr
   | Tuple of expr list
+  | Unit
 
 type qname = string
 
 type typ =
   | TVar of tv ref
-  | TConst of tconst
+  | TConstant of tconstant
   | TArrow of typ * typ * levels
   | TTuple of typ list * levels
 and tv = Unbound of qname * level | Link of typ
 and levels = { mutable level_old : level; mutable level_new : level }
-and tconst = TInt | TBool | TString
+and tconstant = TInt | TBool | TString | TUnit
