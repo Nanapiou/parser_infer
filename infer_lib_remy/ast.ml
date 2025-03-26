@@ -30,4 +30,4 @@ and tconstant = TInt | TBool | TString | TUnit
 
 type declaration =
   | Dexpr of varname * expr
-  | Dtype of varname * expr
+  | Dtype of varname * typ

@@ -39,12 +39,12 @@ let rec make_apply e = function
 // %right ARROW
 %left LEQ
 
-%start <Ast.expr> prog
+%start <Ast.declaration list> prog
 
 %%
 
 prog:
-	| d = declaration; EOF { d }
+	| d = declaration+; EOF { d }
 	;
 
 declaration:
