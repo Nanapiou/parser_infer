@@ -23,6 +23,12 @@ let print_token = function
   | ADD -> print_endline "ADD"
   | STRING s -> Printf.printf "STRING %s\n" s
   | COMA -> print_endline "COMA"
+  | TYPE -> print_endline "TYPE"
+  | UNIT_TYPE -> print_endline "UNIT_TYPE"
+  | STRING_TYPE -> print_endline "STRING_TYPE"
+  | INT_TYPE -> print_endline "INT_TYPE"
+  | BOOL_TYPE -> print_endline "BOOL_TYPE"
+  | REC -> print_endline "REC"
 
 let rec print_typ =
   let open Printf in

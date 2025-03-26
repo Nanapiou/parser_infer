@@ -305,4 +305,18 @@ let default_tenv =
   |> StringDict.add "( <= )"
        (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TBool)))
 
-let infer (txt : string) = infer_base default_tenv (Parse.parse txt)
+(* Gives an env containing every variable of the code linked to their types *)
+let infer (txt : string): typ StringDict.t =
+  let decs = Parse.parse txt in
+  List.fold_left (fun env -> function
+    | Dexpr (x, e) ->
+      (* Same as a "let .. in .." *)
+      enter_level ();
+      let ty_e = infer_base env e in
+      exit_level ();
+      gen ty_e; 
+      StringDict.add x ty_e env
+    | Dtype _ -> assert false
+  ) default_tenv decs
+  (* infer_base default_tenv (Parse.parse txt) *)
+
