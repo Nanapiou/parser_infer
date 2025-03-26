@@ -31,9 +31,14 @@ rule read =
   | "then" { THEN }
   | "else" { ELSE }
   | "let" { LET }
+  | "rec" { REC }
   | "=" { EQUALS }
   | "in" { IN }
   | ";" { SEMICOLON }
+  | "int" { INT_TYPE }
+  | "string" { STRING_TYPE }
+  | "unit" { UNIT_TYPE }
+  | "bool" { BOOL_TYPE }
   | string { STRING (String.sub (Lexing.lexeme lexbuf) 1 (String.length (Lexing.lexeme lexbuf) - 2)) }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | id { ID (Lexing.lexeme lexbuf) }

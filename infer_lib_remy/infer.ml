@@ -259,7 +259,7 @@ let rec infer_base (tenv : env) : expr -> typ = function
   | Unit -> TConstant TUnit
   | Var x -> inst @@ StringDict.find x tenv
   | Fun (x, e) -> infer_fun tenv x e
-  | Tuple l -> infer_tuple tenv l;
+  | Tuple l -> infer_tuple tenv l
   | Let (x, e, e') -> infer_let tenv x e e'
   | App (e, e') -> infer_app tenv e e'
   | If (eb, e, e') -> infer_if tenv eb e e'

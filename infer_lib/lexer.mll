@@ -44,7 +44,7 @@ rule read =
   | ";" { SEMICOLON }
   | "()" { UNIT }
   | digit { INT (int_of_string (Lexing.lexeme lexbuf)) }
-  | typid { TYPID (Lexing.lexeme lexbuf) }
+  (* | typid { TYPID (Lexing.lexeme lexbuf) } *)
   | capid { CAPID (Lexing.lexeme lexbuf) }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF }

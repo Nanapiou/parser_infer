@@ -94,7 +94,11 @@ let rec repr = function
 let get_level : typ -> level = function
   | TVar {contents = Unbound (_, l)} -> l
   | TArrow (_, _, ls) -> ls.level_new
-  | _ -> failwith "get_level: not a normalized type"
+  | TTuple (_, ls) -> ls.level_new
+  | TConstant _ -> 0
+  | (TVar _ as t) ->
+     print_typ t;
+     failwith ", get_level: not a normalized type"
 
 let tokenize_line s =
   let lexbuf = Lexing.from_string s in

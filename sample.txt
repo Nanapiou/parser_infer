@@ -1,1 +1,1 @@
-let x = true in ()
+let a = (true, 0) in if true then a else (0, 5)

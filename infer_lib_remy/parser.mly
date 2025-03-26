@@ -11,11 +11,16 @@ let rec make_apply e = function
 
 %token SEMICOLON
 %token EOF
+%token TYPE
+%token INT_TYPE
+%token STRING_TYPE
+%token UNIT_TYPE
+%token BOOL_TYPE
 %token <int> INT 
 %token <string> ID
 %token <string> STRING
 
-
+%token REC
 %token LPAREN RPAREN
 %token ADD MULT LEQ
 %token FUN ARROW
@@ -39,9 +44,21 @@ let rec make_apply e = function
 %%
 
 prog:
-	| e = expr; EOF { e }
+	| d = declaration; EOF { d }
 	;
-	
+
+declaration:
+	| LET; REC?; id = ID; EQUALS; e = expr; SEMICOLON; SEMICOLON { Dexpr (id, e) }
+	| TYPE; id = ID; EQUALS; t = typ; SEMICOLON; SEMICOLON { Dtype (id, t) }
+	;
+
+typ:
+	| INT_TYPE { TConstant TInt }
+	| STRING_TYPE { TConstant TString }
+	| UNIT_TYPE { TConstant TUnit }
+	| BOOL_TYPE { TConstant TBool }
+	;
+
 expr:
 	| e = simpl_expr { e }
 	| e = simpl_expr; es = simpl_expr+ { make_apply e es }

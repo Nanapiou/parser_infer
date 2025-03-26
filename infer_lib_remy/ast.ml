@@ -27,3 +27,7 @@ type typ =
 and tv = Unbound of qname * level | Link of typ
 and levels = { mutable level_old : level; mutable level_new : level }
 and tconstant = TInt | TBool | TString | TUnit
+
+type declaration =
+  | Dexpr of varname * expr
+  | Dtype of varname * expr
