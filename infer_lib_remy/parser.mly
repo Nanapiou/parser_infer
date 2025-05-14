@@ -57,7 +57,11 @@ typ:
 	| STRING_TYPE { TConstant TString }
 	| UNIT_TYPE { TConstant TUnit }
 	| BOOL_TYPE { TConstant TBool }
+	| t = typ; ts = typ_product_term+ { TTuple (t :: ts, { level_old = generic_level; level_new = generic_level }) } 
 	;
+
+typ_product_term:
+	| MULT; t = typ { t }
 
 expr:
 	| e = simpl_expr { e }

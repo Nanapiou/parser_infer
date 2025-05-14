@@ -35,6 +35,7 @@ rule read =
   | "=" { EQUALS }
   | "in" { IN }
   | ";" { SEMICOLON }
+  | "type" { TYPE }
   | "int" { INT_TYPE }
   | "string" { STRING_TYPE }
   | "unit" { UNIT_TYPE }

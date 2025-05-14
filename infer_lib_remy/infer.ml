@@ -316,7 +316,7 @@ let infer (txt : string): typ StringDict.t =
       exit_level ();
       gen ty_e; 
       StringDict.add x ty_e env
-    | Dtype _ -> assert false
+    | Dtype _ -> env
   ) default_tenv decs
   (* infer_base default_tenv (Parse.parse txt) *)
 
