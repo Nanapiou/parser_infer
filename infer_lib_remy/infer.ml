@@ -260,7 +260,7 @@ let rec infer_base (tenv : env) : expr -> typ = function
   | Var x -> inst @@ StringDict.find x tenv
   | Fun (x, e) -> infer_fun tenv x e
   | Tuple l -> infer_tuple tenv l
-  | Let (x, e, e') -> infer_let tenv x e e'
+  | Let (r, x, e, e') -> infer_let tenv r x e e'
   | App (e, e') -> infer_app tenv e e'
   | If (eb, e, e') -> infer_if tenv eb e e'
 
@@ -272,12 +272,22 @@ and infer_fun tenv x e =
 and infer_tuple tenv l =
   new_tuple (List.map (infer_base tenv) l)
 
-and infer_let tenv x e e' =
-  enter_level ();
-  let ty_e = infer_base tenv e in
-  exit_level ();
-  gen ty_e;
-  infer_base (StringDict.add x ty_e tenv) e'
+and infer_let tenv r x e e' =
+  if r then begin
+    let ty_x = newvar () in
+    enter_level ();
+    let ty_e = infer_base (StringDict.add x ty_x tenv) e in
+    unify ty_e ty_x;
+    exit_level ();
+    gen ty_e;
+    infer_base (StringDict.add x ty_e tenv) e'
+  end else begin 
+    enter_level ();
+    let ty_e = infer_base tenv e in
+    exit_level ();
+    gen ty_e;
+    infer_base (StringDict.add x ty_e tenv) e'
+  end
 
 and infer_app tenv e e' =
   let ty_fun = infer_base tenv e in
@@ -297,6 +307,7 @@ and infer_if tenv eb e e' =
   tret
 
 let default_tenv =
+  (* Harcoding operators as functions (it is normally a full feature) *)
   StringDict.empty
   |> StringDict.add "( + )"
        (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
@@ -318,13 +329,23 @@ let default_tenv =
 let infer (txt : string): typ StringDict.t =
   let decs = Parse.parse txt in
   List.fold_left (fun env -> function
-    | Dexpr (x, e) ->
+    | Dexpr (r, x, e) ->
       (* Same as a "let .. in .." *)
-      enter_level ();
-      let ty_e = infer_base env e in
-      exit_level ();
-      gen ty_e; 
-      StringDict.add x ty_e env
+      if r then begin
+        let ty_x = newvar () in
+        enter_level ();
+        let ty_e = infer_base (StringDict.add x ty_x env) e in
+        unify ty_e ty_x;
+        exit_level ();
+        gen ty_e;
+        StringDict.add x ty_e env
+      end else begin 
+        enter_level ();
+        let ty_e = infer_base env e in
+        exit_level ();
+        gen ty_e;
+        StringDict.add x ty_e env
+      end
     | Dtype _ -> env
   ) default_tenv decs
   (* infer_base default_tenv (Parse.parse txt) *)

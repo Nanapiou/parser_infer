@@ -7,6 +7,8 @@ let rec make_apply e = function
   | [] -> failwith "precondition violated"
   | [e'] -> App (e, e')
   | h :: ((_ :: _) as t) -> make_apply (App (e, h)) t
+
+let rec_opt_to_bool = function None -> false | Some _ -> true
 %}
 
 %token SEMICOLON
@@ -48,7 +50,7 @@ prog:
 	;
 
 declaration:
-	| LET; REC?; id = ID; EQUALS; e = expr; SEMICOLON; SEMICOLON { Dexpr (id, e) }
+	| LET; r = REC?; id = ID; EQUALS; e = expr; SEMICOLON; SEMICOLON { Dexpr (rec_opt_to_bool r, id, e) }
 	| TYPE; id = ID; EQUALS; t = typ; SEMICOLON; SEMICOLON { Dtype (id, t) }
 	;
 
@@ -67,8 +69,8 @@ expr:
 	| e = simpl_expr { e }
 	| e = simpl_expr; es = simpl_expr+ { make_apply e es }
 	| FUN; x = ID; ARROW; e = expr { Fun (x, e) }
-	| LET; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (id, e1, e2) }
-	| LET; id = ID; EQUALS; e1 = expr; SEMICOLON; SEMICOLON; e2 = expr { Let (id, e1, e2) }
+	| LET; r = REC?; id = ID; EQUALS; e1 = expr; IN; e2 = expr { Let (rec_opt_to_bool r, id, e1, e2) }
+	| LET; r = REC?; id = ID; EQUALS; e1 = expr; SEMICOLON; SEMICOLON; e2 = expr { Let (rec_opt_to_bool r, id, e1, e2) }
 	| IF; e1 = expr; THEN; e2 = expr; ELSE; e3 = expr { If (e1, e2, e3) }
 	;
 

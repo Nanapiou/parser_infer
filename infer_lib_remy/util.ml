@@ -111,8 +111,8 @@ let rec print_expr = function
     print_string ") else (";
     print_expr e3;
     print_char ')'
-  | Let (x, e1, e2) ->
-    Printf.printf "let %s = (" x;
+  | Let (r, x, e1, e2) ->
+    if r then Printf.printf "let rec %s = (" x else Printf.printf "let %s = (" x;
     print_expr e1;
     print_string ") in (";
     print_expr e2;

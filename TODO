@@ -2,3 +2,5 @@
 - Manage user defined types
 
 For both, need to find a way to manage a type environment
+
+- Noticed that operators are applied before function, need to change that (didn't find an instant way in parser.mly)

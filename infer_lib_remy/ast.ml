@@ -13,7 +13,7 @@ type expr =
   | Bool of bool
   | String of string
   | If of expr * expr * expr
-  | Let of varname * expr * expr
+  | Let of bool * varname * expr * expr
   | Tuple of expr list
   | Unit
 
@@ -29,5 +29,5 @@ and levels = { mutable level_old : level; mutable level_new : level }
 and tconstant = TInt | TBool | TString | TUnit
 
 type declaration =
-  | Dexpr of varname * expr
+  | Dexpr of bool * varname * expr
   | Dtype of varname * typ
