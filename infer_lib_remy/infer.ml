@@ -304,6 +304,15 @@ let default_tenv =
        (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
   |> StringDict.add "( <= )"
        (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TBool)))
+  |> StringDict.add "( = )"
+      ((fun () -> (* Ugly way to use the same var, but anyway... *)
+        enter_level ();
+        let x = newvar () in
+        let t = new_arrow x (new_arrow x (TConstant TBool)) in
+        exit_level ();
+        gen t;
+        t
+      ) ())
 
 (* Gives an env containing every variable of the code linked to their types *)
 let infer (txt : string): typ StringDict.t =

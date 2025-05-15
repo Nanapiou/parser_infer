@@ -52,6 +52,42 @@ let rec print_typ =
     List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
     print_char ')'
 
+let string_of_type ty =
+  let open Printf in
+  let buf = Buffer.create 64 in
+
+  let rec aux = function
+    | TConstant TInt -> Buffer.add_string buf "TInt"
+    | TConstant TBool -> Buffer.add_string buf "TBool"
+    | TConstant TString -> Buffer.add_string buf "TString"
+    | TConstant TUnit -> Buffer.add_string buf "TUnit"
+    (* | QVar x -> bprintf buf "QVar %s" x *)
+    | TVar { contents = Unbound (x, l) } ->
+        bprintf buf "%s.%d" x l
+    | TVar { contents = Link t } ->
+        aux t
+    | TArrow (t1, t2, { level_old; level_new }) ->
+        bprintf buf "((%d,%d) " level_old level_new;
+        aux t1;
+        Buffer.add_string buf " -> ";
+        aux t2;
+        Buffer.add_char buf ')'
+    | TTuple (l, { level_old; level_new }) ->
+        bprintf buf "((%d,%d) " level_old level_new;
+        (match l with
+        | [] -> ()
+        | h :: t ->
+            aux h;
+            List.iter (fun t ->
+              Buffer.add_string buf ", ";
+              aux t
+            ) t);
+        Buffer.add_char buf ')'
+  in
+  aux ty;
+  Buffer.contents buf
+
+
 let rec print_expr = function
   | Var x -> print_string x
   | App (e1, e2) ->

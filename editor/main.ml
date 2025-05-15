@@ -1,9 +1,14 @@
 open Tk
+open Infer
+
+let height = 20
+let width = 150
 
 let top = openTk ()
 
+let typesLbl = Label.create ~background:(`Color "#251916") ~foreground:(`White) ~justify:`Left ~anchor:`Nw ~height ~width:(width / 2) top
 
-let text = Text.create ~background:(`Color "#302421") ~width:150 ~height:50 top
+let text = Text.create ~background:(`Color "#302421") ~foreground:(`White) ~height:height ~width:(width / 2) top
 let () = Text.tag_configure ~tag:"base_color" ~foreground:(`White) text
 let () = Text.tag_configure ~tag:"value" ~foreground:(`Color "#ebacfc") text
 let () = Text.tag_configure ~tag:"string" ~foreground:(`Color "#e0f5bf") text
@@ -52,11 +57,29 @@ let saveFile () =
   if f = "" then () else
   writeFile f (Text.get ~start:(`Linechar (0, 0), [`Linestart]) ~stop:(`End, [`Linestart]) text)
 
+let writeTypes _ =
+  let codeTxt = Text.get ~start:(`Linechar (0, 0), [`Linestart]) ~stop:(`End, [`Linestart]) text in
+  let toWrite = try
+    let buf = Buffer.create 256 in
+    StringDict.iter (fun x t ->
+      let line = Printf.sprintf "%s: %s\n" x (Util.string_of_type t) in
+      Buffer.add_string buf line
+    ) (infer codeTxt);
+    Buffer.contents buf
+  with NoUnifier (t1, t2) ->
+    Printf.sprintf "No unifier:\n%s <> %s" (Util.string_of_type t1) (Util.string_of_type t2)
+  in
+  Label.configure ~text:toWrite typesLbl
+
 let buttonOpen = Button.create ~text:"Ouvrir" ~command:openFile top
 let buttonSave = Button.create ~text:"Enregistrer" ~command:saveFile top
 let buttonQuit = Button.create ~text:"Quitter" ~command:closeTk top
 
-let _ = grid [coe text] ~columnspan:3 ~column:1 ~row:1
+let () =
+  bind ~events:[`Modified ([`Control], `KeyPressDetail "p")] ~action:writeTypes ~fields:[] top
+
+let _ = grid [coe text] ~columnspan:3 ~column:1 ~row:1 ~sticky:"nsew"
+let _ = grid [coe typesLbl] ~rowspan:2 ~column:4 ~row:1 ~sticky:"nsew"
 let _ = grid [coe buttonOpen] ~column:1 ~row:2
 let _ = grid [coe buttonSave] ~column:2 ~row:2
 let _ = grid [coe buttonQuit] ~column:3 ~row:2

@@ -77,11 +77,13 @@ simpl_expr:
 	| LPAREN; ADD; RPAREN { Var ("( + )") }
 	| LPAREN; MULT; RPAREN { Var ("( * )") }
 	| LPAREN; LEQ; RPAREN { Var ("( <= )") }
+	| LPAREN; EQUALS; RPAREN { Var ("( = )") }
 	| e1 = simpl_expr; ADD; e2 = simpl_expr { App (App (Var ("( + )"), e1), e2) }
 	| e1 = simpl_expr; LEQ; e2 = simpl_expr { App (App (Var ("( <= )"), e1), e2) }
 	| e1 = simpl_expr; MULT; e2 = simpl_expr { App (App (Var ("( * )"), e1), e2) }
-  | LPAREN; e1 = expr; el = tuple_elt+; RPAREN { Tuple (e1 :: el) }  	
-  | LPAREN; RPAREN { Unit }
+	| e1 = simpl_expr; EQUALS; e2 = simpl_expr { App (App (Var ("( = )"), e1), e2) }
+	| LPAREN; e1 = expr; el = tuple_elt+; RPAREN { Tuple (e1 :: el) }  	
+	| LPAREN; RPAREN { Unit }
 	| TRUE { Bool true }
 	| FALSE { Bool false }
 	| i = INT { Int i }
