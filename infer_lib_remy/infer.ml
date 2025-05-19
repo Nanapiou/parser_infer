@@ -55,6 +55,7 @@ let rec cycle_free : typ -> unit = function
       ls.level_new <- marked_level;
       List.iter cycle_free l;
       ls.level_new <- level
+  | TConstructor (_, _, _) -> failwith "TODO"
 
 (*
   Update the level of the type so that it does not exceed the
@@ -125,6 +126,7 @@ let force_delayed_adjustments () =
       if ls.level_new > level then ls.level_new <- level;
         adjust_one acc ty
     | TConstant _ | TVar _ -> acc
+    | TConstructor (_, _, _) -> failwith "TODO"
   (* only deals with composite types *)
   and adjust_one acc = function
     | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) when ls.level_old <= !current_level ->
@@ -170,6 +172,7 @@ let gen (ty : typ) : unit =
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
     | TConstant _ | TVar _ | TArrow _ | TTuple _ -> ()
+    | TConstructor (_, _, _) -> failwith "TODO"
   in
   loop ty
 
@@ -195,6 +198,7 @@ let inst (ty : typ) : typ =
         let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
         (new_tuple l, subst)
     | (TVar _ as ty) | (TConstant _ as ty) | (TArrow _ as ty) | (TTuple _ as ty) -> (ty, subst)
+    | TConstructor (_, _, _) -> failwith "TODO"
   in
   fst (loop StringDict.empty (repr ty))
 
@@ -252,17 +256,48 @@ and unify_lev l ty1 ty2 =
   update_level l ty1;
   unify ty1 ty2
 
+let manage_match_pattern tenv e: env * typ =
+  let rec aux tenv = function
+    | Int _ -> (tenv, TConstant TInt)
+    | String _ -> (tenv, TConstant TString)
+    | Bool _ -> (tenv, TConstant TBool)
+    | Unit -> (tenv, TConstant TUnit)
+    | Var x -> let ty_x = newvar () in
+      (StringDict.add x ty_x tenv, ty_x)
+    | Tuple l ->
+      let tenv, typ_l = List.fold_left_map aux tenv l in
+      (tenv, new_tuple typ_l)
+    | If (_, _, _) | Match (_, _) | Fun (_, _) | App (_, _) | Let (_, _, _, _) -> failwith "Invalid match pattern"
+    | Constructor (_, _) -> failwith "TODO"
+  in
+  aux tenv e
+    
+
 let rec infer_base (tenv : env) : expr -> typ = function
   | Int _ -> TConstant TInt
   | Bool _ -> TConstant TBool
   | String _ -> TConstant TString
   | Unit -> TConstant TUnit
   | Var x -> inst @@ StringDict.find x tenv
+  | Match (e, l) -> infer_match tenv e l
   | Fun (x, e) -> infer_fun tenv x e
   | Tuple l -> infer_tuple tenv l
   | Let (r, x, e, e') -> infer_let tenv r x e e'
   | App (e, e') -> infer_app tenv e e'
   | If (eb, e, e') -> infer_if tenv eb e e'
+  | Constructor (_, _) -> failwith "TODO"
+
+and infer_match tenv e l =
+  let ty_e = infer_base tenv e in
+  let ty_l = List.map (fun (e1, e2) ->
+    let tenv, ty_e1 = manage_match_pattern tenv e1 in
+    (ty_e1, infer_base tenv e2)
+  ) l in
+  let patter_h, val_h = List.hd ty_l in
+  unify patter_h ty_e;
+  iter_double (fun (p1, v1) (p2, v2) -> unify p1 p2; unify v1 v2) ty_l;
+  val_h
+
 
 and infer_fun tenv x e =
   let ty_x = newvar () in

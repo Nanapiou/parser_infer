@@ -12,6 +12,8 @@ type expr =
   | Int of int
   | Bool of bool
   | String of string
+  | Match of expr * (expr * expr) list
+  | Constructor of string * expr list
   | If of expr * expr * expr
   | Let of bool * varname * expr * expr
   | Tuple of expr list
@@ -24,6 +26,7 @@ type typ =
   | TConstant of tconstant
   | TArrow of typ * typ * levels
   | TTuple of typ list * levels
+  | TConstructor of typ list * string * levels
 and tv = Unbound of qname * level | Link of typ
 and levels = { mutable level_old : level; mutable level_new : level }
 and tconstant = TInt | TBool | TString | TUnit

@@ -20,6 +20,7 @@ let rec_opt_to_bool = function None -> false | Some _ -> true
 %token BOOL_TYPE
 %token <int> INT 
 %token <string> ID
+%token <string> CONSTRUCTOR 
 %token <string> STRING
 
 %token REC

@@ -14,6 +14,7 @@ let print_token = function
   | IN -> print_endline "IN"
   | IF -> print_endline "IF"
   | ID s -> Printf.printf "ID %s\n" s
+  | CONSTRUCTOR s -> Printf.printf "CONSTRUCTOR %s\n" s
   | FUN -> print_endline "FUN"
   | FALSE -> print_endline "FALSE"
   | EQUALS -> print_endline "EQUALS"
@@ -51,6 +52,8 @@ let rec print_typ =
     print_typ (List.hd l);
     List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
     print_char ')'
+  | TConstructor (_, _, _) ->
+    failwith "TODO"
 
 let string_of_type ty =
   let open Printf in
@@ -83,6 +86,7 @@ let string_of_type ty =
               aux t
             ) t);
         Buffer.add_char buf ')'
+    | TConstructor (_, _, _) -> failwith "TODO"
   in
   aux ty;
   Buffer.contents buf
@@ -103,6 +107,11 @@ let rec print_expr = function
   | Int i -> print_int i
   | Bool b -> print_string (string_of_bool b)
   | String s -> Printf.printf "\"%s\"" s
+  | Match (e, l) ->
+    print_string "match ";
+    print_expr e;
+    print_string " with";
+    List.iter (fun (e1, e2) -> print_char '\n'; print_expr e1; print_string " -> "; print_expr e2) l
   | If (e1, e2, e3) ->
     print_string "if (";
     print_expr e1;
@@ -122,6 +131,7 @@ let rec print_expr = function
     print_expr (List.hd l);
     List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
     print_char ')'
+  | Constructor (_, _) -> failwith "TODO"
   | Unit -> print_string "()"
 
 let rec repr = function
@@ -135,8 +145,7 @@ let rec repr = function
 (* get the level of a normalized type, which is not a bound TVar *)
 let get_level : typ -> level = function
   | TVar {contents = Unbound (_, l)} -> l
-  | TArrow (_, _, ls) -> ls.level_new
-  | TTuple (_, ls) -> ls.level_new
+  | TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls) -> ls.level_new
   | TConstant _ -> 0
   | (TVar _ as t) ->
      print_typ t;
@@ -153,3 +162,7 @@ let tokenize_line s =
 
 let print_tokenized_line l =
   List.iter (Fun.compose (Printf.printf "%s ") fst) l
+
+let rec iter_double f = function
+  | [] | [_] -> ()
+  | h1 :: h2 :: t -> f h1 h2; iter_double f t
