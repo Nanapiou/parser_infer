@@ -10,6 +10,7 @@ module Parser = Parser
 
 exception NoUnifier of typ * typ
 exception OccurCheck of typ
+exception ConstructorArguments of typ list * typ list
 
 type env = typ StringDict.t
 
@@ -354,14 +355,15 @@ let manage_match_pattern cenv tenv e : env * typ =
     | Tuple l ->
         let tenv, ty_l = List.fold_left_map aux tenv l in
         (tenv, new_tuple ty_l)
-    | If (_, _, _) | Match (_, _) | Fun (_, _) | App (_, _) | Let (_, _, _, _)
-      ->
-        failwith "Invalid match pattern"
     | Constructor (x, l) ->
         let tenv, ty_l = List.fold_left_map aux tenv l in
         let constr, ty_l_bis = inst_constr cenv x in
+        if List.length ty_l <> List.length ty_l_bis then raise (ConstructorArguments (ty_l, ty_l_bis)) else
         List.iter2 unify ty_l ty_l_bis;
         (tenv, constr)
+    | If (_, _, _) | Match (_, _) | Fun (_, _) | App (_, _) | Let (_, _, _, _)
+      ->
+        failwith "Invalid match pattern"
   in
   aux tenv e
 
@@ -383,6 +385,7 @@ let rec infer_base (cenv : constructors_env) (tenv : env) : expr -> typ =
 and infer_constructor cenv tenv x l =
   let ty_l = List.map (infer_base cenv tenv) l in
   let constr, ty_l_bis = inst_constr cenv x in
+  if List.length ty_l <> List.length ty_l_bis then raise (ConstructorArguments (ty_l, ty_l_bis)) else
   List.iter2 unify ty_l ty_l_bis;
   constr
 
@@ -468,19 +471,16 @@ let default_tenv =
           ())
 
 let default_cenv : constructors_env =
+  let a_list =
+    TConstructor
+      ( [ TVar (ref (Unbound ("a", generic_level))) ],
+        "list",
+        { level_new = generic_level; level_old = generic_level } )
+  in
   StringDict.empty
-  |> StringDict.add "EmptyList"
-       ( TConstructor
-           ( [ TVar (ref (Unbound ("a", generic_level))) ],
-             "list",
-             { level_new = generic_level; level_old = generic_level } ),
-         [] )
+  |> StringDict.add "EmptyList" (a_list, [])
   |> StringDict.add "NodeList"
-       ( TConstructor
-           ( [ TVar (ref (Unbound ("a", generic_level))) ],
-             "list",
-             { level_new = generic_level; level_old = generic_level } ),
-         [ TVar (ref (Unbound ("a", generic_level))) ] )
+       (a_list, [ TVar (ref (Unbound ("a", generic_level))); a_list ])
 
 (* Gives an env containing every variable of the code linked to their types *)
 let infer (txt : string) : typ StringDict.t =
