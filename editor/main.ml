@@ -62,12 +62,12 @@ let writeTypes _ =
   let toWrite = try
     let buf = Buffer.create 256 in
     StringDict.iter (fun x t ->
-      let line = Printf.sprintf "%s: %s\n" x (Util.string_of_type t) in
+      let line = Printf.sprintf "%s: %s\n" x (Util.string_of_typ t) in
       Buffer.add_string buf line
     ) (infer codeTxt);
     Buffer.contents buf
   with NoUnifier (t1, t2) ->
-    Printf.sprintf "No unifier:\n%s <> %s" (Util.string_of_type t1) (Util.string_of_type t2)
+    Printf.sprintf "No unifier:\n%s <> %s" (Util.string_of_typ t1) (Util.string_of_typ t2)
   in
   Label.configure ~text:toWrite typesLbl
 

@@ -1,6 +1,8 @@
 open Ast
 open Parser
 
+let string_of_level i = if i = generic_level then "gen" else string_of_int i
+
 let print_token = function
   | TRUE -> print_endline "TRUE"
   | THEN -> print_endline "THEN"
@@ -38,6 +40,39 @@ let print_token = function
   | REC -> print_endline "REC"
 
 let rec print_typ =
+  function
+  | TConstant TInt -> print_string "int"
+  | TConstant TBool -> print_string "bool"
+  | TConstant TString -> print_string "string"
+  | TConstant TUnit -> print_string "unit"
+  (* | QVar x -> printf "QVar %s" x *)
+  | TVar { contents = Unbound (x, _) } -> print_string x
+  | TVar { contents = Link t } -> print_typ t
+  | TArrow (t1, t2, _) ->
+      print_string "(";
+      print_typ t1;
+      print_string " -> ";
+      print_typ t2;
+      print_string ")"
+  | TTuple (l, _) ->
+      print_string "(";
+      (match l with
+      | [] -> ()
+      | hd :: tl ->
+          print_typ hd;
+          List.iter (fun t -> print_string " * "; print_typ t) tl);
+      print_string ")"
+  | TConstructor (args, name, _) ->
+      (match args with
+      | [] -> ()
+      | hd :: tl ->
+          print_typ hd;
+          List.iter (fun t -> print_string " "; print_typ t) tl;
+          print_string " ");
+      print_string name
+  | TTempConstructor _ -> failwith "print_typ: unexpected TTempConstructor"
+
+let rec print_typ_with_level =
   let open Printf in
   function
   | TConstant (TInt) -> print_string "TInt"
@@ -46,29 +81,76 @@ let rec print_typ =
   | TConstant (TUnit) -> print_string "TUnit"
   (* | QVar x -> printf "QVar %s" x *)
   | TVar ({ contents = Unbound (x, l) }) -> printf "%s.%d" x l
-  | TVar ({ contents = Link t }) -> print_typ t
+  | TVar ({ contents = Link t }) -> print_typ_with_level t
   | TArrow (t1, t2, {level_old; level_new}) ->
     Printf.printf "((%d,%d) " level_old level_new;
-    print_typ t1;
+    print_typ_with_level t1;
     print_string " -> ";
-    print_typ t2;
+    print_typ_with_level t2;
     print_char ')'
   | TTuple (l, {level_old; level_new}) ->
     Printf.printf "((%d,%d) " level_old level_new;
-    print_typ (List.hd l);
-    List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
+    print_typ_with_level (List.hd l);
+    List.iter (fun t -> print_string ", "; print_typ_with_level t) (List.tl l);
     print_char ')'
   | TConstructor (l, x, {level_old; level_new}) ->
     Printf.printf "(%d,%d) " level_old level_new;
     if l <> [] then begin
-      print_typ (List.hd l);
-      List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
+      print_typ_with_level (List.hd l);
+      List.iter (fun t -> print_string ", "; print_typ_with_level t) (List.tl l);
       print_char ' ';
     end;
     print_string x
   | TTempConstructor _ -> failwith "print_typ error"
 
-let string_of_type ty =
+let string_of_typ ty =
+  let buf = Buffer.create 64 in
+
+  let rec aux = function
+    | TConstant TInt -> Buffer.add_string buf "int"
+    | TConstant TBool -> Buffer.add_string buf "bool"
+    | TConstant TString -> Buffer.add_string buf "string"
+    | TConstant TUnit -> Buffer.add_string buf "unit"
+    (* | QVar x -> bprintf buf "QVar %s" x *)
+    | TVar { contents = Unbound (x, _) } ->
+        Buffer.add_string buf x
+    | TVar { contents = Link t } ->
+        aux t
+    | TArrow (t1, t2, _) ->
+        Buffer.add_char buf '(';
+        aux t1;
+        Buffer.add_string buf " -> ";
+        aux t2;
+        Buffer.add_char buf ')'
+    | TTuple (l, _) ->
+        Buffer.add_char buf '(';
+        (match l with
+         | [] -> ()
+         | h :: t ->
+             aux h;
+             List.iter (fun t ->
+               Buffer.add_string buf " * ";
+               aux t
+             ) t);
+        Buffer.add_char buf ')'
+    | TConstructor (l, x, _) ->
+        (match l with
+         | [] -> ()
+         | h :: t ->
+             aux h;
+             List.iter (fun t ->
+               Buffer.add_char buf ' ';
+               aux t
+             ) t;
+             Buffer.add_char buf ' ');
+        Buffer.add_string buf x
+    | TTempConstructor _ -> failwith "string_of_typ: unexpected TTempConstructor"
+  in
+
+  aux ty;
+  Buffer.contents buf
+
+let string_of_type_with_levels ty =
   let open Printf in
   let buf = Buffer.create 64 in
 
@@ -180,7 +262,7 @@ let get_level : typ -> level = function
   | TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls) -> ls.level_new
   | TConstant _ -> 0
   | (TVar _ as t) ->
-     print_typ t;
+     print_typ_with_level t;
      failwith ", get_level: not a normalized type"
   | TTempConstructor _ -> failwith "get_level error"
 
