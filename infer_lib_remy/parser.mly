@@ -63,6 +63,11 @@ typ:
 	| STRING_TYPE { TConstant TString }
 	| UNIT_TYPE { TConstant TUnit }
 	| BOOL_TYPE { TConstant TBool }
+	| tids = TID*; id = ID { TConstructor (
+			List.map (fun tid -> TVar (ref (Unbound (tid, generic_level)))) tids,
+			id,
+			{ level_old = generic_level; level_new = generic_level }
+	) }
 	| tid = TID { TVar (ref (Unbound (tid, generic_level))) }
 	| t = typ; ts = typ_product_term+ { TTuple (t :: ts, { level_old = generic_level; level_new = generic_level }) } 
 	| cases = constructor_case+ { TTempConstructor cases }
