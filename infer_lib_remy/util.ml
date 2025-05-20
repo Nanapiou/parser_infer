@@ -52,8 +52,13 @@ let rec print_typ =
     print_typ (List.hd l);
     List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
     print_char ')'
-  | TConstructor (_, _, _) ->
-    failwith "TODO"
+  | TConstructor (l, x, {level_old; level_new}) ->
+    Printf.printf "(%d,%d) " level_old level_new;
+    print_typ (List.hd l);
+    List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
+    print_char ' ';
+    print_string x
+  | TTempConstructor _ -> failwith "print_typ error"
 
 let string_of_type ty =
   let open Printf in
@@ -86,7 +91,19 @@ let string_of_type ty =
               aux t
             ) t);
         Buffer.add_char buf ')'
-    | TConstructor (_, _, _) -> failwith "TODO"
+    | TConstructor (l, x, {level_old; level_new}) -> 
+        bprintf buf "(%d,%d) " level_old level_new;
+        (match l with
+        | [] -> ()
+        | h :: t ->
+            aux h;
+            List.iter (fun t ->
+              Buffer.add_string buf ", ";
+              aux t
+            ) t);
+        Buffer.add_char buf ' ';
+        Buffer.add_string buf x
+    | TTempConstructor _ -> failwith "string of type error"
   in
   aux ty;
   Buffer.contents buf
@@ -131,7 +148,12 @@ let rec print_expr = function
     print_expr (List.hd l);
     List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
     print_char ')'
-  | Constructor (_, _) -> failwith "TODO"
+  | Constructor (x, l) ->
+    print_string x;
+    print_string " (";
+    print_expr (List.hd l);
+    List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
+    print_char ')'
   | Unit -> print_string "()"
 
 let rec repr = function
@@ -150,6 +172,7 @@ let get_level : typ -> level = function
   | (TVar _ as t) ->
      print_typ t;
      failwith ", get_level: not a normalized type"
+  | TTempConstructor _ -> failwith "get_level error"
 
 let tokenize_line s =
   let lexbuf = Lexing.from_string s in
