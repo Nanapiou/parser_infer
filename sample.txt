@@ -1,33 +1,13 @@
-type 'a option =
-	| None
-	| Some of 'a
-;;
-
-let a = Some 8;;
-let b = Some true;;
-let c = None;;
-
-let boom = if a = c then 8 else 0;;
-let d = fun y -> match y with
-	| Some x -> x
-	| None -> 0
-;;
-
-type 'a list =
-	| Empty
-	| Node of 'a * 'a list
-;;
-
 let rec length = fun l -> match l with
-	| Empty -> 0
-	| Node (e, t) -> 1 + (length t)
+	| EmptyList -> 0
+	| NodeList (e, t) -> 1 + (length t)
 ;;
 
 let fold_left = fun f -> fun acc -> fun l ->
 	let rec aux = fun acc -> fun l ->
 		match l with
-		| Empty -> acc
-		| Node (h, t) -> aux (f acc h) t
+		| EmptyList -> acc
+		| NodeList (h, t) -> aux (f acc h) t
 	in
 	aux acc l
 ;;

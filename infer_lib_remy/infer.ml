@@ -15,7 +15,7 @@ type env = typ StringDict.t
 
 (* |!| The first typ *should be* a TConstructor *)
 (* If some types are vars, thoses are quantified and linked together *)
-type constructors_env = (typ * typ list) StringDict.t 
+type constructors_env = (typ * typ list) StringDict.t
 
 let current_level = ref 0
 let enter_level () = incr current_level
@@ -33,8 +33,10 @@ let newvar () = TVar (ref (Unbound (get_sym (), !current_level)))
 
 let new_arrow ty1 ty2 : typ =
   TArrow (ty1, ty2, { level_new = !current_level; level_old = !current_level })
+
 let new_tuple l : typ =
   TTuple (l, { level_new = !current_level; level_old = !current_level })
+
 let new_constructor l x =
   TConstructor (l, x, { level_new = !current_level; level_old = !current_level })
 
@@ -46,7 +48,7 @@ let new_constructor l x =
 let rec cycle_free : typ -> unit = function
   | TVar { contents = Unbound _ } | TConstant _ -> ()
   | TVar { contents = Link ty } -> cycle_free ty
-  | (TArrow (_, _, ls) as t) when ls.level_new = marked_level ->
+  | TArrow (_, _, ls) as t when ls.level_new = marked_level ->
       raise (OccurCheck t)
   | TArrow (t1, t2, ls) ->
       let level = ls.level_new in
@@ -59,7 +61,7 @@ let rec cycle_free : typ -> unit = function
       ls.level_new <- marked_level;
       List.iter cycle_free l;
       ls.level_new <- level
-  (* | TConstructor (l, _, ls) -> *)
+      (* | TConstructor (l, _, ls) -> *)
       (* let level = ls.level_new in *)
       (* ls.level_new <- marked_level; *)
       (* List.iter cycle_free l; *)
@@ -92,7 +94,9 @@ let update_level (l : level) : typ -> unit = function
   | TVar ({ contents = Unbound (n, l') } as tvr) ->
       assert (not (l' = generic_level));
       if l < l' then tvr := Unbound (n, l)
-  | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) | (TConstructor (_, _, ls) as ty) ->
+  | (TArrow (_, _, ls) as ty)
+  | (TTuple (_, ls) as ty)
+  | (TConstructor (_, _, ls) as ty) ->
       assert (not (ls.level_new = generic_level));
       if ls.level_new = marked_level then raise (OccurCheck ty);
       if l < ls.level_new then (
@@ -129,18 +133,25 @@ let force_delayed_adjustments () =
     | TVar ({ contents = Unbound (name, l) } as tvr) when l > level ->
         tvr := Unbound (name, level);
         acc
-    | TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls) when ls.level_new = marked_level ->
+    | (TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls))
+      when ls.level_new = marked_level ->
         raise (OccurCheck ty)
-    | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) | (TConstructor (_, _, ls) as ty) ->
-      if ls.level_new > level then ls.level_new <- level;
+    | (TArrow (_, _, ls) as ty)
+    | (TTuple (_, ls) as ty)
+    | (TConstructor (_, _, ls) as ty) ->
+        if ls.level_new > level then ls.level_new <- level;
         adjust_one acc ty
     | TConstant _ | TVar _ -> acc
     | TTempConstructor _ -> failwith "force_adjustments error"
   (* only deals with composite types *)
   and adjust_one acc = function
-    | (TArrow (_, _, ls) as ty) | (TTuple (_, ls) as ty) | (TConstructor (_, _, ls) as ty) when ls.level_old <= !current_level ->
+    | (TArrow (_, _, ls) as ty)
+    | (TTuple (_, ls) as ty)
+    | (TConstructor (_, _, ls) as ty)
+      when ls.level_old <= !current_level ->
         ty :: acc (* update later *)
-    | TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls) when ls.level_old = ls.level_new ->
+    | (TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls))
+      when ls.level_old = ls.level_new ->
         acc (* already updated *)
     | TArrow (ty1, ty2, ls) ->
         let level = ls.level_new in
@@ -157,7 +168,7 @@ let force_delayed_adjustments () =
         ls.level_new <- level;
         ls.level_old <- level;
         acc
-    (* | TConstructor (l, _, ls) -> *)
+        (* | TConstructor (l, _, ls) -> *)
         (* let level = ls.level_new in *)
         (* ls.level_new <- marked_level; *)
         (* let acc = List.fold_left (fun acc cur -> loop acc level cur) acc l in *)
@@ -184,16 +195,27 @@ let gen (ty : typ) : unit =
     | TTuple (l, ls) when ls.level_new > !current_level ->
         let l = List.map repr l in
         List.iter loop l;
-        let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
+        let lvl =
+          List.fold_left
+            (fun acc cur -> max acc (get_level cur))
+            (get_level (List.hd l))
+            (List.tl l)
+        in
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
     | TConstructor (l, _, ls) when ls.level_new > !current_level ->
-        if l = [] then () else
-        let l = List.map repr l in
-        List.iter loop l;
-        let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
-        ls.level_old <- lvl;
-        ls.level_new <- lvl (* set the exact level upper bound *)
+        if l = [] then ()
+        else
+          let l = List.map repr l in
+          List.iter loop l;
+          let lvl =
+            List.fold_left
+              (fun acc cur -> max acc (get_level cur))
+              (get_level (List.hd l))
+              (List.tl l)
+          in
+          ls.level_old <- lvl;
+          ls.level_new <- lvl (* set the exact level upper bound *)
     | TConstant _ | TVar _ | TArrow _ | TTuple _ | TConstructor _ -> ()
     | TTempConstructor _ -> failwith "gen error"
   in
@@ -217,33 +239,45 @@ let inst (ty : typ) : typ =
         let ty2, subst = loop subst ty2 in
         (new_arrow ty1 ty2, subst)
     | TTuple (l, ls) when ls.level_new = generic_level ->
-        let flip (a, b) = b, a in
-        let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
+        let flip (a, b) = (b, a) in
+        let subst, l =
+          List.fold_left_map (fun subst t -> flip (loop subst t)) subst l
+        in
         (new_tuple l, subst)
-    | TConstructor (l, x, ls) when ls.level_new = generic_level -> 
-        let flip (a, b) = b, a in
-        let subst, l = List.fold_left_map (fun subst t -> flip (loop subst t)) subst l  in
+    | TConstructor (l, x, ls) when ls.level_new = generic_level ->
+        let flip (a, b) = (b, a) in
+        let subst, l =
+          List.fold_left_map (fun subst t -> flip (loop subst t)) subst l
+        in
         (new_constructor l x, subst)
-    | (TVar _ as ty) | (TConstant _ as ty) | (TArrow _ as ty) | (TTuple _ as ty) | (TConstructor _ as ty) -> (ty, subst)
+    | (TVar _ as ty)
+    | (TConstant _ as ty)
+    | (TArrow _ as ty)
+    | (TTuple _ as ty)
+    | (TConstructor _ as ty) ->
+        (ty, subst)
     | TTempConstructor _ -> failwith "inst error"
   in
   fst (loop StringDict.empty (repr ty))
 
-let inst_constr cenv x = 
-  let (constr_holder, ty_l_holder) = StringDict.find x cenv in
+let inst_constr cenv x =
+  let constr_holder, ty_l_holder = StringDict.find x cenv in
   (* It's ugly af, may be updated in the future... *)
   (* Both may contain same quantified types, so I need to instantiate them in the same call, or I need to upgrade the [inst] function. I chose this ugly way *)
-  let temp_arrow = TArrow (constr_holder, TTuple (ty_l_holder, { level_new=generic_level; level_old=generic_level }), { level_new=generic_level; level_old=generic_level }) in
+  let temp_arrow =
+    TArrow
+      ( constr_holder,
+        TTuple
+          (ty_l_holder, { level_new = generic_level; level_old = generic_level }),
+        { level_new = generic_level; level_old = generic_level } )
+  in
   let temp_arrow = inst temp_arrow in
   match temp_arrow with
-  | TArrow (a, b, _) -> begin a, match b with
-    | TTuple (l, _) -> l
-    | _ -> failwith "Shouldn't happen."
-    end
+  | TArrow (a, b, _) ->
+      (a, match b with TTuple (l, _) -> l | _ -> failwith "Shouldn't happen.")
   | _ -> failwith "Shouldn't happen."
-  (* End of the ugly *)
-    
-    
+(* End of the ugly *)
+
 (* Unifying a free variable tv with a type t takes constant time:
    it merely links tv to t (setting the level of t to tv if tv's
    level was smaller). Therefore, cycles may be created accidentally,
@@ -281,7 +315,7 @@ let rec unify (t1 : typ) (t2 : typ) : unit =
         unify_lev min_level tyl2 tyr2;
         ll.level_new <- min_level;
         lr.level_new <- min_level
-    | TTuple (l1, ll), TTuple (l2, lr) ->
+    | TTuple (l1, ll), TTuple (l2, lr) when List.length l1 = List.length l2 ->
         if ll.level_new = marked_level then raise (OccurCheck t1)
         else if lr.level_new = marked_level then raise (OccurCheck t2);
         let min_level = min ll.level_new lr.level_new in
@@ -290,7 +324,8 @@ let rec unify (t1 : typ) (t2 : typ) : unit =
         List.iter2 (unify_lev min_level) l1 l2;
         ll.level_new <- min_level;
         lr.level_new <- min_level
-    | TConstructor (l1, x1, ll), TConstructor (l2, x2, lr) when x1 = x2 ->
+    | TConstructor (l1, x1, ll), TConstructor (l2, x2, lr)
+      when x1 = x2 && List.length l1 = List.length l2 ->
         if ll.level_new = marked_level then raise (OccurCheck t1)
         else if lr.level_new = marked_level then raise (OccurCheck t2);
         let min_level = min ll.level_new lr.level_new in
@@ -307,28 +342,31 @@ and unify_lev l ty1 ty2 =
   update_level l ty1;
   unify ty1 ty2
 
-let manage_match_pattern cenv tenv e: env * typ =
+let manage_match_pattern cenv tenv e : env * typ =
   let rec aux tenv = function
     | Int _ -> (tenv, TConstant TInt)
     | String _ -> (tenv, TConstant TString)
     | Bool _ -> (tenv, TConstant TBool)
     | Unit -> (tenv, TConstant TUnit)
-    | Var x -> let ty_x = newvar () in
-      (StringDict.add x ty_x tenv, ty_x)
+    | Var x ->
+        let ty_x = newvar () in
+        (StringDict.add x ty_x tenv, ty_x)
     | Tuple l ->
-      let tenv, ty_l = List.fold_left_map aux tenv l in
-      (tenv, new_tuple ty_l)
-    | If (_, _, _) | Match (_, _) | Fun (_, _) | App (_, _) | Let (_, _, _, _) -> failwith "Invalid match pattern"
-    | Constructor (x, l) -> 
-      let tenv, ty_l = List.fold_left_map aux tenv l in
-      let constr, ty_l_bis = inst_constr cenv x in
-      List.iter2 unify ty_l ty_l_bis;
-      (tenv, constr)
+        let tenv, ty_l = List.fold_left_map aux tenv l in
+        (tenv, new_tuple ty_l)
+    | If (_, _, _) | Match (_, _) | Fun (_, _) | App (_, _) | Let (_, _, _, _)
+      ->
+        failwith "Invalid match pattern"
+    | Constructor (x, l) ->
+        let tenv, ty_l = List.fold_left_map aux tenv l in
+        let constr, ty_l_bis = inst_constr cenv x in
+        List.iter2 unify ty_l ty_l_bis;
+        (tenv, constr)
   in
   aux tenv e
-    
 
-let rec infer_base (cenv: constructors_env) (tenv : env) : expr -> typ = function
+let rec infer_base (cenv : constructors_env) (tenv : env) : expr -> typ =
+  function
   | Int _ -> TConstant TInt
   | Bool _ -> TConstant TBool
   | String _ -> TConstant TString
@@ -347,44 +385,47 @@ and infer_constructor cenv tenv x l =
   let constr, ty_l_bis = inst_constr cenv x in
   List.iter2 unify ty_l ty_l_bis;
   constr
-  
-  
+
 and infer_match cenv tenv e l =
   let ty_e = infer_base cenv tenv e in
-  let ty_l = List.map (fun (e1, e2) ->
-    let tenv, ty_e1 = manage_match_pattern cenv tenv e1 in
-    (ty_e1, infer_base cenv tenv e2)
-  ) l in
+  let ty_l =
+    List.map
+      (fun (e1, e2) ->
+        let tenv, ty_e1 = manage_match_pattern cenv tenv e1 in
+        (ty_e1, infer_base cenv tenv e2))
+      l
+  in
   let patter_h, val_h = List.hd ty_l in
   unify patter_h ty_e;
-  iter_double (fun (p1, v1) (p2, v2) -> unify p1 p2; unify v1 v2) ty_l;
+  iter_double
+    (fun (p1, v1) (p2, v2) ->
+      unify p1 p2;
+      unify v1 v2)
+    ty_l;
   val_h
-
 
 and infer_fun cenv tenv x e =
   let ty_x = newvar () in
   let ty_e = infer_base cenv (StringDict.add x ty_x tenv) e in
   new_arrow ty_x ty_e
 
-and infer_tuple cenv tenv l =
-  new_tuple (List.map (infer_base cenv tenv) l)
+and infer_tuple cenv tenv l = new_tuple (List.map (infer_base cenv tenv) l)
 
 and infer_let cenv tenv r x e e' =
-  if r then begin
+  if r then (
     let ty_x = newvar () in
     enter_level ();
     let ty_e = infer_base cenv (StringDict.add x ty_x tenv) e in
     unify ty_e ty_x;
     exit_level ();
     gen ty_e;
-    infer_base cenv (StringDict.add x ty_e tenv) e'
-  end else begin 
+    infer_base cenv (StringDict.add x ty_e tenv) e')
+  else (
     enter_level ();
     let ty_e = infer_base cenv tenv e in
     exit_level ();
     gen ty_e;
-    infer_base cenv (StringDict.add x ty_e tenv) e'
-  end
+    infer_base cenv (StringDict.add x ty_e tenv) e')
 
 and infer_app cenv tenv e e' =
   let ty_fun = infer_base cenv tenv e in
@@ -407,51 +448,79 @@ let default_tenv =
   (* Harcoding operators as functions (it is normally a full feature) *)
   StringDict.empty
   |> StringDict.add "( + )"
-       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
+       (new_arrow (TConstant TInt)
+          (new_arrow (TConstant TInt) (TConstant TInt)))
   |> StringDict.add "( * )"
-       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TInt)))
+       (new_arrow (TConstant TInt)
+          (new_arrow (TConstant TInt) (TConstant TInt)))
   |> StringDict.add "( <= )"
-       (new_arrow (TConstant TInt) (new_arrow (TConstant TInt) (TConstant TBool)))
+       (new_arrow (TConstant TInt)
+          (new_arrow (TConstant TInt) (TConstant TBool)))
   |> StringDict.add "( = )"
-      ((fun () -> (* Ugly way to use the same var, but anyway... *)
-        enter_level ();
-        let x = newvar () in
-        let t = new_arrow x (new_arrow x (TConstant TBool)) in
-        exit_level ();
-        gen t;
-        t
-      ) ())
-let default_cenv = StringDict.empty
+       ((fun () ->
+          (* Ugly way to use the same var, but anyway... *)
+          enter_level ();
+          let x = newvar () in
+          let t = new_arrow x (new_arrow x (TConstant TBool)) in
+          exit_level ();
+          gen t;
+          t)
+          ())
+
+let default_cenv : constructors_env =
+  StringDict.empty
+  |> StringDict.add "EmptyList"
+       ( TConstructor
+           ( [ TVar (ref (Unbound ("a", generic_level))) ],
+             "list",
+             { level_new = generic_level; level_old = generic_level } ),
+         [] )
+  |> StringDict.add "NodeList"
+       ( TConstructor
+           ( [ TVar (ref (Unbound ("a", generic_level))) ],
+             "list",
+             { level_new = generic_level; level_old = generic_level } ),
+         [ TVar (ref (Unbound ("a", generic_level))) ] )
 
 (* Gives an env containing every variable of the code linked to their types *)
-let infer (txt : string): typ StringDict.t =
+let infer (txt : string) : typ StringDict.t =
   let decs = Parse.parse txt in
-  let (tenv, _): env * constructors_env = List.fold_left (fun (env, cenv) -> function
-    | Dexpr (r, x, e) ->
-      (* Same as a "let .. in .." *)
-      if r then begin
-        let ty_x = newvar () in
-        enter_level ();
-        let ty_e = infer_base cenv (StringDict.add x ty_x env) e in
-        unify ty_e ty_x;
-        exit_level ();
-        gen ty_e;
-        StringDict.add x ty_e env, cenv
-      end else begin 
-        enter_level ();
-        let ty_e = infer_base cenv env e in
-        exit_level ();
-        gen ty_e;
-        StringDict.add x ty_e env, cenv
-      end
-    | Dtype (ptyps, x, t) -> begin match t with
-      | TTempConstructor elts ->
-        let constr_holder = TConstructor (ptyps, x, { level_old=generic_level; level_new=generic_level }) in
-        env, List.fold_left (fun acc (n, l) -> StringDict.add n (constr_holder, l) acc) cenv elts
-      | _ -> env, cenv
-    end
-  ) (default_tenv, default_cenv) decs
+  let (tenv, _) : env * constructors_env =
+    List.fold_left
+      (fun (env, cenv) -> function
+        | Dexpr (r, x, e) ->
+            (* Same as a "let .. in .." *)
+            if r then (
+              let ty_x = newvar () in
+              enter_level ();
+              let ty_e = infer_base cenv (StringDict.add x ty_x env) e in
+              unify ty_e ty_x;
+              exit_level ();
+              gen ty_e;
+              (StringDict.add x ty_e env, cenv))
+            else (
+              enter_level ();
+              let ty_e = infer_base cenv env e in
+              exit_level ();
+              gen ty_e;
+              (StringDict.add x ty_e env, cenv))
+        | Dtype (ptyps, x, t) -> (
+            match t with
+            | TTempConstructor elts ->
+                let constr_holder =
+                  TConstructor
+                    ( ptyps,
+                      x,
+                      { level_old = generic_level; level_new = generic_level }
+                    )
+                in
+                ( env,
+                  List.fold_left
+                    (fun acc (n, l) -> StringDict.add n (constr_holder, l) acc)
+                    cenv elts )
+            | _ -> (env, cenv)))
+      (default_tenv, default_cenv)
+      decs
   in
   tenv
-  (* infer_base default_tenv (Parse.parse txt) *)
-
+(* infer_base default_tenv (Parse.parse txt) *)
