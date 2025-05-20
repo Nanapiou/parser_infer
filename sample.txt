@@ -1,3 +1,12 @@
-let f = fun x -> if x then 0 else 1;;
+type 'a option = | None | Some of 'a;;
 
-let a = f true + 2;;
+let a = Some (8);;
+let b = Some (true);;
+let c = None;;
+
+let boom = if a = c then 8 else 0;;
+let d = fun y -> match y with
+	| Some x -> x
+	| None -> 0;;
+
+

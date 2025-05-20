@@ -27,11 +27,11 @@ type typ =
   | TArrow of typ * typ * levels
   | TTuple of typ list * levels
   | TConstructor of typ list * string * levels
-  | TTempConstructor of typ list * (string * typ list) list (* Used when parsing in order to build the constructors' env *)
+  | TTempConstructor of (string * typ list) list (* Used when parsing in order to build the constructors' env *)
 and tv = Unbound of qname * level | Link of typ
 and levels = { mutable level_old : level; mutable level_new : level }
 and tconstant = TInt | TBool | TString | TUnit
 
 type declaration =
   | Dexpr of bool * varname * expr
-  | Dtype of varname * typ
+  | Dtype of typ list * varname * typ

@@ -14,6 +14,7 @@ let print_token = function
   | IN -> print_endline "IN"
   | IF -> print_endline "IF"
   | ID s -> Printf.printf "ID %s\n" s
+  | TID s -> Printf.printf "TID %s\n" s
   | CONSTRUCTOR s -> Printf.printf "CONSTRUCTOR %s\n" s
   | FUN -> print_endline "FUN"
   | FALSE -> print_endline "FALSE"
@@ -22,6 +23,11 @@ let print_token = function
   | ELSE -> print_endline "ELSE"
   | ARROW -> print_endline "ARROW"
   | ADD -> print_endline "ADD"
+  | MATCH -> print_endline "MATCH"
+  | WITH -> print_endline "WITH"
+  | VERTBAR -> print_endline "VERTBAR"
+  | OF -> print_endline "OF"
+  | UNIT -> print_endline "UNIT"
   | STRING s -> Printf.printf "STRING %s\n" s
   | COMA -> print_endline "COMA"
   | TYPE -> print_endline "TYPE"
@@ -54,9 +60,11 @@ let rec print_typ =
     print_char ')'
   | TConstructor (l, x, {level_old; level_new}) ->
     Printf.printf "(%d,%d) " level_old level_new;
-    print_typ (List.hd l);
-    List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
-    print_char ' ';
+    if l <> [] then begin
+      print_typ (List.hd l);
+      List.iter (fun t -> print_string ", "; print_typ t) (List.tl l);
+      print_char ' ';
+    end;
     print_string x
   | TTempConstructor _ -> failwith "print_typ error"
 
@@ -150,10 +158,12 @@ let rec print_expr = function
     print_char ')'
   | Constructor (x, l) ->
     print_string x;
-    print_string " (";
-    print_expr (List.hd l);
-    List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
-    print_char ')'
+    if l <> [] then begin
+      print_string " (";
+      print_expr (List.hd l);
+      List.iter (fun t -> print_string ", "; print_expr t) (List.tl l);
+      print_char ')'
+    end
   | Unit -> print_string "()"
 
 let rec repr = function

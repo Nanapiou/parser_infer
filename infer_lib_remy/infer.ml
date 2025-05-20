@@ -188,6 +188,7 @@ let gen (ty : typ) : unit =
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
     | TConstructor (l, _, ls) when ls.level_new > !current_level ->
+        if l = [] then () else
         let l = List.map repr l in
         List.iter loop l;
         let lvl = List.fold_left (fun acc cur -> max acc (get_level cur)) (get_level (List.hd l)) (List.tl l) in
@@ -443,8 +444,8 @@ let infer (txt : string): typ StringDict.t =
         gen ty_e;
         StringDict.add x ty_e env, cenv
       end
-    | Dtype (x, t) -> begin match t with
-      | TTempConstructor (ptyps, elts) ->
+    | Dtype (ptyps, x, t) -> begin match t with
+      | TTempConstructor elts ->
         let constr_holder = TConstructor (ptyps, x, { level_old=generic_level; level_new=generic_level }) in
         env, List.fold_left (fun acc (n, l) -> StringDict.add n (constr_holder, l) acc) cenv elts
       | _ -> env, cenv
