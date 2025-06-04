@@ -184,7 +184,8 @@ let gen (ty : typ) : unit =
   force_delayed_adjustments ();
   let rec loop ty =
     match repr ty with
-    | TVar ({ contents = Unbound (name, l) } as tvr) when l > !current_level ->
+    | TVar ({ contents = Unbound (name, l) } as tvr)
+      when l > !current_level ->
         tvr := Unbound (name, generic_level)
     | TArrow (ty1, ty2, ls) when ls.level_new > !current_level ->
         let ty1 = repr ty1 and ty2 = repr ty2 in
@@ -226,16 +227,18 @@ let gen (ty : typ) : unit =
    Only the components at generic_level are traversed, since only
    those may contain quantified type variables.
 *)
-let inst (ty : typ) : typ =
-  let rec loop (subst : typ StringDict.t) = function
-    | TVar { contents = Unbound (name, l) } when l = generic_level -> (
+let inst (ty: typ): typ =
+  let rec loop (subst: typ StringDict.t): typ -> typ * typ StringDict.t = function
+    | TVar { contents = Unbound (name, l) }
+      when l = generic_level -> (
         match StringDict.find_opt name subst with
         | Some ty -> (ty, subst)
         | None ->
             let tv = newvar () in
             (tv, StringDict.add name tv subst))
     | TVar { contents = Link ty } -> loop subst ty
-    | TArrow (ty1, ty2, ls) when ls.level_new = generic_level ->
+    | TArrow (ty1, ty2, ls)
+      when ls.level_new = generic_level ->
         let ty1, subst = loop subst ty1 in
         let ty2, subst = loop subst ty2 in
         (new_arrow ty1 ty2, subst)
@@ -524,3 +527,14 @@ let infer (txt : string) : typ StringDict.t =
   in
   tenv
 (* infer_base default_tenv (Parse.parse txt) *)
+
+let infer_and_print txt = 
+  let env = infer txt in     
+  try
+    StringDict.iter (fun x t ->
+      Printf.printf "%s: " x; Util.print_typ t; print_newline ()
+    ) env
+  with NoUnifier (t1, t2) ->
+    print_endline "No unifier:";
+    Util.print_typ t1; print_string " <> "; Util.print_typ t2;
+  print_newline ()

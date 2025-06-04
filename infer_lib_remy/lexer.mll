@@ -36,6 +36,8 @@ rule read =
   | "=" { EQUALS }
   | "in" { IN }
   | ";" { SEMICOLON }
+  | "::" { DOUBLE_COLON }
+  | ":" { COLON }
   | "type" { TYPE }
   | "int" { INT_TYPE }
   | "string" { STRING_TYPE }

@@ -66,14 +66,14 @@ let unify (c: constraints): substitution list =
 
 (** [instantiate t] gives a new type instance based on [t] which is a TForall.
     If [t] isn't a TForall, returns [t] itself. *)
-let instantiate t = match t with
+let instantiate (t: typ): typ = match t with
   | TForall (l, t) -> List.fold_left (
     fun t x ->
       substitute_typ (next_varname ()) x t
   ) t l
   | _ -> t
 
-let generalize c1 tenv x t1 =
+let generalize (c1: constraints) (tenv: typ_env) (x: name) (t1: typ): typ_env =
   let rec get_var_set_from_typ t = match t with
     | TConst _ -> IntSet.empty
     | TVar n -> IntSet.empty |> IntSet.add n 

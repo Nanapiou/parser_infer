@@ -11,7 +11,7 @@ let rec make_apply e = function
 let opt_to_bool = function None -> false | Some _ -> true
 %}
 
-%token SEMICOLON
+%token SEMICOLON COLON DOUBLE_COLON
 %token EOF
 %token TYPE
 %token INT_TYPE
@@ -26,6 +26,7 @@ let opt_to_bool = function None -> false | Some _ -> true
 
 %token REC
 %token LPAREN RPAREN
+%token LBRACKET RBRACKET
 %token ADD MULT LEQ
 %token FUN ARROW
 %token TRUE FALSE
@@ -36,6 +37,7 @@ let opt_to_bool = function None -> false | Some _ -> true
 %token LET EQUALS IN
 %token UNIT
 
+%right DOUBLE_COLON
 %left ADD 
 %left MULT
 // %right ARROW
@@ -109,6 +111,7 @@ simpl_expr:
 	| e1 = simpl_expr; LEQ; e2 = simpl_expr { App (App (Var ("( <= )"), e1), e2) }
 	| e1 = simpl_expr; MULT; e2 = simpl_expr { App (App (Var ("( * )"), e1), e2) }
 	| e1 = simpl_expr; EQUALS; e2 = simpl_expr { App (App (Var ("( = )"), e1), e2) }
+	(* | h = expr; DOUBLE_COLON; t = expr { Constructor ("NodeList", [h; t]) } *)
 	| x = CONSTRUCTOR; elts = constructor_elts? { Constructor (x, match elts with | None -> [] | Some l ->l) }
 	| LPAREN; e1 = expr; el = tuple_elt+; RPAREN { Tuple (e1 :: el) }  	
 	| LPAREN; RPAREN { Unit }
