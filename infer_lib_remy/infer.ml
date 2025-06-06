@@ -194,7 +194,7 @@ let gen (ty : typ) : unit =
         let l = max (get_level ty1) (get_level ty2) in
         ls.level_old <- l;
         ls.level_new <- l (* set the exact level upper bound *)
-    | TTuple (l, ls) when ls.level_new > !current_level ->
+    | TTuple (l, ls) | TConstructor (l, _, ls) when ls.level_new > !current_level ->
         let l = List.map repr l in
         List.iter loop l;
         let lvl =
@@ -205,19 +205,6 @@ let gen (ty : typ) : unit =
         in
         ls.level_old <- lvl;
         ls.level_new <- lvl (* set the exact level upper bound *)
-    | TConstructor (l, _, ls) when ls.level_new > !current_level ->
-        if l = [] then ()
-        else
-          let l = List.map repr l in
-          List.iter loop l;
-          let lvl =
-            List.fold_left
-              (fun acc cur -> max acc (get_level cur))
-              (get_level (List.hd l))
-              (List.tl l)
-          in
-          ls.level_old <- lvl;
-          ls.level_new <- lvl (* set the exact level upper bound *)
     | TConstant _ | TVar _ | TArrow _ | TTuple _ | TConstructor _ -> ()
     | TTempConstructor _ -> failwith "gen error"
   in
@@ -390,7 +377,9 @@ and infer_constructor cenv tenv x l =
   let constr, ty_l_bis = inst_constr cenv x in
   if List.length ty_l <> List.length ty_l_bis then raise (ConstructorArguments (ty_l, ty_l_bis)) else
   List.iter2 unify ty_l ty_l_bis;
-  constr
+  match constr with
+  | TConstructor (ls, x, _) -> new_constructor ls x (* To set the level to the current one (instead of the generic), so it is just about optimization *)
+  | _ -> failwith "infer_constructor, shouldn't happen"
 
 and infer_match cenv tenv e l =
   let ty_e = infer_base cenv tenv e in
