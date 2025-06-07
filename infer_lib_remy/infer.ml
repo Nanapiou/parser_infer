@@ -62,11 +62,6 @@ let rec cycle_free : typ -> unit = function
       ls.level_new <- marked_level;
       List.iter cycle_free l;
       ls.level_new <- level
-      (* | TConstructor (l, _, ls) -> *)
-      (* let level = ls.level_new in *)
-      (* ls.level_new <- marked_level; *)
-      (* List.iter cycle_free l; *)
-      (* ls.level_new <- level *)
   | TTempConstructor _ -> failwith "Cycle free erro"
 
 (*
@@ -169,13 +164,6 @@ let force_delayed_adjustments () =
         ls.level_new <- level;
         ls.level_old <- level;
         acc
-        (* | TConstructor (l, _, ls) -> *)
-        (* let level = ls.level_new in *)
-        (* ls.level_new <- marked_level; *)
-        (* let acc = List.fold_left (fun acc cur -> loop acc level cur) acc l in *)
-        (* ls.level_new <- level; *)
-        (* ls.level_old <- level; *)
-        (* acc *)
     | _ -> failwith "Delayed adjustment failed, maybe catch-all case"
   in
   to_be_level_adjusted := List.fold_left adjust_one [] !to_be_level_adjusted
@@ -489,12 +477,14 @@ let infer (txt : string) : typ StringDict.t =
               unify ty_e ty_x;
               exit_level ();
               gen ty_e;
+              cycle_free ty_e;
               (StringDict.add x ty_e env, cenv))
             else (
               enter_level ();
               let ty_e = infer_base cenv env e in
               exit_level ();
               gen ty_e;
+              cycle_free ty_e;
               (StringDict.add x ty_e env, cenv))
         | Dtype (ptyps, x, t) -> (
             match t with
