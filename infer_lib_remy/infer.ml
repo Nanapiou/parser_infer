@@ -184,7 +184,7 @@ let gen (ty : typ) : unit =
         let l = max (get_level ty1) (get_level ty2) in
         ls.level_old <- l;
         ls.level_new <- l (* set the exact level upper bound *)
-    | TTuple (l, ls) | TConstructor (l, _, ls) when ls.level_new > !current_level ->
+    | TTuple (l, ls) | TConstructor (l, _, ls) when l <> [] && ls.level_new > !current_level ->
         let l = List.map repr l in
         ls.level_new <- marked_level;
         List.iter loop l;
