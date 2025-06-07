@@ -175,8 +175,10 @@ let gen (ty : typ) : unit =
     | TVar ({ contents = Unbound (name, l) } as tvr)
       when l > !current_level ->
         tvr := Unbound (name, generic_level)
+    | TArrow (_, _, ls) | TTuple (_, ls) | TConstructor (_, _, ls) when ls.level_new = marked_level -> raise (OccurCheck ty)
     | TArrow (ty1, ty2, ls) when ls.level_new > !current_level ->
         let ty1 = repr ty1 and ty2 = repr ty2 in
+        ls.level_new <- marked_level;
         loop ty1;
         loop ty2;
         let l = max (get_level ty1) (get_level ty2) in
@@ -184,6 +186,7 @@ let gen (ty : typ) : unit =
         ls.level_new <- l (* set the exact level upper bound *)
     | TTuple (l, ls) | TConstructor (l, _, ls) when ls.level_new > !current_level ->
         let l = List.map repr l in
+        ls.level_new <- marked_level;
         List.iter loop l;
         let lvl =
           List.fold_left
@@ -483,6 +486,8 @@ let infer (txt : string) : typ StringDict.t =
               enter_level ();
               let ty_e = infer_base cenv env e in
               exit_level ();
+              (* print_typ ty_e; *)
+              (* flush stdout; *)
               gen ty_e;
               cycle_free ty_e;
               (StringDict.add x ty_e env, cenv))
