@@ -1,6 +1,11 @@
-type foo =
-	| Oi
-	| Fl
+type 'a 'b either =
+	| Left of 'a
+	| Right of 'b
 ;;
 
-let x = Oi;;
+let f = fun x -> match x with
+	| Left a -> a <= 5
+	| Right b -> b
+;;
+
+let foo = fun x -> let a = x 8 in a;;
